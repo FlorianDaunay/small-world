@@ -1,0 +1,134 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * Every color, radius, shadow, font and border here comes from the active theme
+ * (CSS variables set by src/themes/css.ts). Never hard-code UI colors: use the tokens.
+ */
+
+@layer base {
+  * {
+    border-style: var(--border-style);
+  }
+
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    @apply bg-canvas text-text-primary font-sans antialiased;
+    background-image: var(--effect-canvas-image);
+    background-attachment: fixed;
+    background-size: cover;
+  }
+
+  :focus-visible {
+    outline: var(--focus-width) solid rgb(var(--color-accent));
+    outline-offset: var(--focus-offset);
+  }
+
+  ::selection {
+    @apply bg-accent/30;
+  }
+}
+
+@layer components {
+  .surface {
+    @apply bg-surface border border-border;
+    backdrop-filter: var(--effect-surface-backdrop);
+  }
+
+  .card {
+    @apply surface rounded-card shadow-card;
+  }
+
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-control border border-border bg-surface px-4 py-2 text-sm font-medium text-text-primary shadow-control transition-colors;
+    @apply hover:bg-surface-hover disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .btn:active:not(:disabled) {
+    box-shadow: var(--shadow-inset);
+  }
+
+  .btn-primary {
+    @apply border-accent bg-accent text-accent-foreground hover:bg-accent-hover hover:border-accent-hover;
+  }
+
+  .btn-danger {
+    @apply border-danger/60 text-danger hover:bg-danger/10;
+  }
+
+  .btn-ghost {
+    @apply border-transparent bg-transparent shadow-none hover:bg-surface-hover;
+  }
+
+  .btn-sm {
+    @apply px-2.5 py-1 text-xs;
+  }
+
+  .btn-lg {
+    @apply px-6 py-3 text-base;
+  }
+
+  .btn-icon {
+    @apply h-9 w-9 p-0;
+  }
+
+  .input {
+    @apply w-full rounded-control border border-border bg-canvas px-3 py-2 text-sm text-text-primary shadow-inset placeholder:text-text-muted;
+    @apply focus:border-accent focus:outline-none;
+  }
+
+  .label {
+    @apply mb-1.5 block text-xs font-semibold uppercase tracking-wide text-text-secondary;
+  }
+
+  .hint {
+    @apply mt-1 text-xs text-text-muted;
+  }
+
+  .badge {
+    @apply inline-flex items-center gap-1 rounded-pill border border-border bg-surface-hover px-2 py-0.5 text-xs font-medium text-text-secondary;
+  }
+
+  .section-title {
+    @apply text-sm font-semibold uppercase tracking-wide text-text-secondary;
+  }
+
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(var(--color-border)) transparent;
+  }
+}
+
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.animate-pop {
+  animation: pop-in 160ms ease-out;
+}
+
+@keyframes pulse-ring {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 0.9;
+  }
+}
+
+.animate-pulse-ring {
+  animation: pulse-ring 1.4s ease-in-out infinite;
+}
