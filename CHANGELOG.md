@@ -5,6 +5,22 @@ Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le pr
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-10-04
+
+### Ajouté
+
+- **Son** : effets sonores synthétisés (Web Audio, aucun fichier) pour les conquêtes, attaques, dés, déclins, gains, votre tour, le chat et la victoire, avec réglage du volume et coupure du son (en-tête et paramètres).
+- **Zone d'informations** : fiches joueurs détaillées (race active et en déclin, régions, jetons sur la carte et en main, forts, gain du dernier tour, gain prévu) dépliables pour lire les pouvoirs et l'historique des races, résumé du tour, et légende des joueurs sur la carte.
+- **Statistiques de fin de partie** : classement avec titres (conquérant, seigneur de guerre…), graphique d'évolution des pièces avec infobulle et tableau de données, tableau détaillé (conquêtes, pertes, dés, marché, bonus…).
+- **Cartes races et pouvoirs illustrées** : icônes vectorielles (game-icons.net, CC BY 3.0) et couleurs propres à chaque race et pouvoir, dans le marché, les fiches joueurs, les règles et sur la carte (jetons, éléments, forts, tanières, terriers).
+
+### Modifié
+
+- **Interface mobile** : plateau plein écran, barre d'actions en bas et panneaux en feuille escamotable, zoom au pincement, sélection d'une région au premier tap puis confirmation (Conquérir / −1 / +1), en-tête compact.
+- Palette des joueurs ajustée (lisibilité et daltonisme validés en thème clair et sombre).
+- Dépendances séparées dans un chunk dédié (meilleur cache entre versions).
+- Protocole réseau v2 : les joueurs doivent tous être en 0.1.1 ; les sauvegardes 0.1.0 restent compatibles.
+
 ## [0.1.0] - 2026-10-04
 
 Première version jouable.
@@ -21,5 +37,6 @@ Première version jouable.
 - Une soixantaine de thèmes d'interface, français et anglais.
 - Déploiement automatique sur GitHub Pages.
 
-[Unreleased]: https://github.com/FlorianDaunay/small-world/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/FlorianDaunay/small-world/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/FlorianDaunay/small-world/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/FlorianDaunay/small-world/releases/tag/v0.1.0

@@ -1,6 +1,7 @@
 import { defaultMap } from "../map/defaults";
 import { topologyOf } from "../map/cache";
 import { applyAction, applySystem, createGame } from "./engine";
+import { normalizeGame } from "./migrate";
 import { conquestBlock, conquestCost, currentPlayer, regionsOf } from "./rules";
 import type { GameAction, GameState } from "./types";
 
@@ -117,5 +118,29 @@ describe("game engine", () => {
     const snapshot = JSON.stringify(state);
     act(state, { type: "pick", index: 3 });
     expect(JSON.stringify(state)).toBe(snapshot);
+  });
+
+  it("keeps statistics for the end of the game", () => {
+    let state = newGame(2, 2);
+    const first = currentPlayer(state).id;
+    state = act(state, { type: "pick", index: 1 });
+    state = act(state, { type: "conquer", region: firstTarget(state) });
+    state = act(state, { type: "endConquest" });
+    state = act(state, { type: "endTurn" });
+    const stats = state.players.find((p) => p.id === first)!.stats;
+    expect(stats.coinsSpent).toBe(1);
+    expect(stats.conquests).toBe(1);
+    expect(stats.races).toHaveLength(1);
+    expect(stats.coinsTimeline).toEqual([state.players.find((p) => p.id === first)!.coins]);
+    expect(stats.earnedRegions).toBe(1);
+  });
+
+  it("upgrades games saved before statistics existed", () => {
+    const state = newGame();
+    const old = structuredClone(state) as GameState;
+    old.players[0].history = [3, 4];
+    delete (old.players[0] as Partial<typeof old.players[0]>).stats;
+    const upgraded = normalizeGame(old);
+    expect(upgraded.players[0].stats.coinsTimeline).toEqual([8, 12]);
   });
 });

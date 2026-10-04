@@ -15,6 +15,10 @@ Jeu de conquête multijoueur **inspiré du jeu de société _Small World_**, jou
 - **Éditeur de cartes** hexagonales : peinture de régions, terrains, mines / cavernes / sources magiques / tribus oubliées, génération aléatoire, annulation (Ctrl+Z), import / export JSON.
 - **Évaluation de l'équilibrage** en direct : score sur 100, taille adaptée au nombre de joueurs, répartition des terrains et éléments, connectivité, points de départ…
 - **12 races et 15 pouvoirs** (humains, elfes, nains, trolls, halfelins… / alchimistes, volants, marins, fortifiés…), déclin, dé de renfort, tribus oubliées.
+- **Interface mobile** : plateau plein écran, panneaux escamotables, zoom au pincement, tap pour voir puis confirmer.
+- **Zone d'informations** : fiches joueurs détaillées et légende des races sur la carte.
+- **Statistiques de fin de partie** : classement, titres, graphique d'évolution des pièces, tableau détaillé.
+- **Sons** synthétisés (Web Audio) avec réglage du volume et coupure.
 - **~60 thèmes d'interface** (clairs, sombres, rétro, néo-brutalisme…), suivi du thème système.
 - **Français et anglais**.
 
@@ -79,6 +83,7 @@ src/
 │   ├── map/            Grille hexagonale, topologie, générateur, analyse d'équilibrage, édition
 │   └── util/           RNG déterministe, identifiants
 ├── net/                WebRTC : protocole, session hôte/client, migration d'hôte
+├── audio/              Effets sonores synthétisés, réglages du volume
 ├── store/              États zustand persistés : profil, cartes, sauvegardes, session
 ├── i18n/               Dictionnaires fr (référence) / en, hook useT()
 ├── themes/             Système de thèmes (tokens → variables CSS → classes Tailwind)
@@ -98,6 +103,10 @@ Principes :
 Le projet suit le [versionnage sémantique](https://semver.org/lang/fr/). La version vient de `package.json` (affichée en bas de l'accueil) et l'historique est dans [CHANGELOG.md](CHANGELOG.md).
 
 Publier une version : mettre à jour `version` dans `package.json` (`npm version <x.y.z> --no-git-tag-version`), compléter le CHANGELOG, commiter, puis créer le tag `v<x.y.z>` et la release GitHub correspondante.
+
+## Crédits
+
+Icônes des races, pouvoirs et éléments de carte : [game-icons.net](https://game-icons.net) (licence [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/)). Elles sont extraites par `npm run icons` (`scripts/build-icons.mjs`) dans `src/ui/icons/generated.ts`.
 
 ## Stack
 

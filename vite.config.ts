@@ -11,6 +11,10 @@ export default defineConfig({
   plugins: [react()],
   // Single source of truth for the version: package.json, exposed to the app at build time.
   define: { __APP_VERSION__: JSON.stringify(pkg.version) },
+  build: {
+    // Libraries change less often than the game: a separate chunk stays cached between releases.
+    rollupOptions: { output: { manualChunks: { vendor: ["react", "react-dom", "react-router-dom", "zustand", "peerjs"] } } },
+  },
   resolve: { alias: { "@": fileURLToPath(new URL("./src", import.meta.url)) } },
   test: { globals: true, environment: "node", include: ["src/**/*.test.ts"] },
 });

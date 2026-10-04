@@ -2,7 +2,7 @@ import type { GameAction, GameSettings, GameState } from "@/core/game";
 import type { GameMap } from "@/core/map/types";
 
 /** Bumped whenever messages change in an incompatible way: peers on other versions are refused. */
-export const PROTOCOL_VERSION = 1;
+export const PROTOCOL_VERSION = 2;
 
 export interface LobbyPlayer {
   id: string;

@@ -1,3 +1,4 @@
+import { SoundSettings } from "@/audio/SoundControl";
 import { LANGUAGES, useT } from "@/i18n";
 import { useProfile, type Language } from "@/store/profile";
 import { themeToStyle, themes, useActiveTheme, useThemeStore } from "@/themes";
@@ -15,16 +16,24 @@ export function SettingsModal({ open, onClose }: { open: boolean; onClose: () =>
   return (
     <Modal open={open} onClose={onClose} title={t("settings.title")} size="xl">
       <div className="space-y-6">
-        <section>
-          <h3 className="label">{t("settings.language")}</h3>
-          <div className="max-w-xs">
-            <Segmented<Language>
-              value={language}
-              onChange={setLanguage}
-              options={Object.entries(LANGUAGES).map(([value, { label }]) => ({ value: value as Language, label }))}
-            />
-          </div>
-        </section>
+        <div className="grid gap-6 sm:grid-cols-2">
+          <section>
+            <h3 className="label">{t("settings.language")}</h3>
+            <div className="max-w-xs">
+              <Segmented<Language>
+                value={language}
+                onChange={setLanguage}
+                options={Object.entries(LANGUAGES).map(([value, { label }]) => ({ value: value as Language, label }))}
+              />
+            </div>
+          </section>
+          <section>
+            <h3 className="label">{t("sound.title")}</h3>
+            <div className="max-w-xs">
+              <SoundSettings />
+            </div>
+          </section>
+        </div>
         <section>
           <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
             <h3 className="label mb-0">

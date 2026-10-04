@@ -45,6 +45,33 @@ export interface ActiveRace {
   holesLeft: number;
 }
 
+/** Running totals kept for the end-of-game statistics. */
+export interface PlayerStats {
+  /** Regions conquered (any kind). */
+  conquests: number;
+  /** Regions taken from other players. */
+  attacks: number;
+  /** Lost tribes driven out. */
+  tribes: number;
+  regionsLost: number;
+  tokensLost: number;
+  rolls: number;
+  rollsWon: number;
+  declines: number;
+  /** Coins paid to skip combos in the market, and coins picked up from it. */
+  coinsSpent: number;
+  coinsCollected: number;
+  /** Coins earned from held regions, and from race/power bonuses. */
+  earnedRegions: number;
+  earnedBonus: number;
+  /** Most regions held at the end of one of the player's turns. */
+  peakRegions: number;
+  /** Every combo the player picked, in order. */
+  races: { race: RaceId; power: PowerId; turn: number }[];
+  /** Coins after each of the player's turns. */
+  coinsTimeline: number[];
+}
+
 export interface PlayerState {
   id: string;
   name: string;
@@ -56,6 +83,7 @@ export interface PlayerState {
   declined: { race: RaceId; power: PowerId } | null;
   /** Coins earned per turn, for the end-of-game summary. */
   history: number[];
+  stats: PlayerStats;
 }
 
 export type Phase = "pick" | "conquer" | "redeploy" | "finished";

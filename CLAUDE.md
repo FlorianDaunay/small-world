@@ -54,6 +54,9 @@ src/features/ un dossier par écran (home, create, join, room, game, editor, rul
 - **Races / pouvoirs** : une entrée dans `races.ts` / `powers.ts` (hooks `discount`, `score`, drapeaux…) + traductions `race.<id>` / `power.<id>` dans les deux langues. Ne pas coder de cas particulier ailleurs que via ces hooks.
 - **Textes** : aucune chaîne visible en dur dans les composants ; tout passe par `useT()`. `fr.ts` définit les clés, `en.ts` doit avoir exactement les mêmes (vérifié par TypeScript). Les entrées du journal et de l'analyse stockent des clés + paramètres, traduits à l'affichage.
 - **Thèmes** : n'utiliser que les tokens (`bg-surface`, `text-text-muted`, `border-border`, `rounded-card`, `shadow-card`…) et les classes de `index.css` (`card`, `btn`, `input`…). Seules les couleurs de carte (terrains) et de joueurs sont fixes (`features/map/palette.ts`).
+- **Icônes** : uniquement via `<Icon name=…>` (`src/ui/icons`). Pour en ajouter, compléter la liste de `scripts/build-icons.mjs` puis `npm run icons` (ne jamais éditer `generated.ts`). Pas d'emoji dans l'UI. Les couleurs et icônes des races/pouvoirs sont dans `features/cards/art.ts` (hors du moteur).
+- **Son** : `playSound()` (`src/audio/sound.ts`) ; les sons de partie sont dérivés du journal dans `useRoomSounds`, pas déclenchés dans le moteur.
+- **Mobile** : tester chaque écran en largeur téléphone ; sur tactile, une action sur la carte se fait en deux temps (tap = sélection, puis bouton ou second tap).
 - **Stockage** : passer par `store/storage.ts` (préfixe `smallworld:`, accès protégés par try/catch).
 - **Versions** : semver ; la version vit uniquement dans `package.json` (exposée via `src/version.ts`). Toute release met à jour `CHANGELOG.md` et reçoit un tag `v<x.y.z>`. Le `PROTOCOL_VERSION` réseau est indépendant de la version de l'app.
 - **Tests** : toute règle de jeu ou d'analyse de carte ajoutée doit être couverte dans `core/**/*.test.ts`.

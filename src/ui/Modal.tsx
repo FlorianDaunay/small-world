@@ -23,11 +23,11 @@ export function Modal({ open, onClose, title, children, footer, size = "md" }: M
 
   if (!open) return null;
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onMouseDown={onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-2 sm:p-4" onMouseDown={onClose}>
       <div
         role="dialog"
         aria-modal="true"
-        className={cx("card animate-pop flex max-h-[90vh] w-full flex-col shadow-overlay", widths[size])}
+        className={cx("card animate-pop flex max-h-[92dvh] w-full flex-col shadow-overlay", widths[size])}
         onMouseDown={(e) => e.stopPropagation()}
       >
         <header className="flex items-center justify-between gap-4 border-b border-border px-5 py-3">
@@ -36,7 +36,7 @@ export function Modal({ open, onClose, title, children, footer, size = "md" }: M
             ✕
           </button>
         </header>
-        <div className="scrollbar-thin overflow-y-auto px-5 py-4">{children}</div>
+        <div className="scrollbar-thin overflow-y-auto px-4 py-4 sm:px-5">{children}</div>
         {footer && <footer className="flex justify-end gap-2 border-t border-border px-5 py-3">{footer}</footer>}
       </div>
     </div>,

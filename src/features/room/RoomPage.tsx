@@ -1,5 +1,7 @@
 import { useEffect, useRef } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
+import { playSound } from "@/audio/sound";
+import { useRoomSounds } from "@/audio/useRoomSounds";
 import { GameView } from "@/features/game/GameView";
 import { useT } from "@/i18n";
 import { useSession } from "@/store/session";
@@ -13,6 +15,7 @@ export function RoomPage() {
   const navigate = useNavigate();
   const { view, leave } = useSession();
   useRefusalToasts();
+  useRoomSounds();
 
   if (!view) return <Navigate to="/" replace />;
 
@@ -58,6 +61,7 @@ function useRefusalToasts() {
   useEffect(() => {
     if (!refusal || refusal.at === shown.current) return;
     shown.current = refusal.at;
+    playSound("error");
     const specific = t.dyn(`game.refused.${refusal.error}`);
     const block = t.dyn(`game.blocks.${refusal.error}`);
     toast(specific.startsWith("game.") ? (block.startsWith("game.") ? t("game.refused.generic") : block) : specific, "danger");

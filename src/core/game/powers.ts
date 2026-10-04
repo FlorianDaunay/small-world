@@ -29,7 +29,6 @@ export const MAX_FORTRESSES = 6;
 export interface PowerDef {
   id: PowerId;
   tokens: number;
-  icon: string;
   discount?: (ctx: ConquestContext) => number;
   score?: (ctx: ScoreContext) => number;
   /** May conquer seas and lakes. */
@@ -49,46 +48,46 @@ const terrainScore = (terrain: string) => (ctx: ScoreContext) =>
 const isCurrent = (ctx: ScoreContext) => ctx.state.players[ctx.state.turn.playerIndex].id === ctx.player.id;
 
 export const POWERS: Record<PowerId, PowerDef> = {
-  alchemist: { id: "alchemist", tokens: 4, icon: "⚗️", score: () => 2 },
-  merchant: { id: "merchant", tokens: 2, icon: "💰", score: (ctx) => ctx.regions.length },
+  alchemist: { id: "alchemist", tokens: 4, score: () => 2 },
+  merchant: { id: "merchant", tokens: 2, score: (ctx) => ctx.regions.length },
   fortified: {
     id: "fortified",
     tokens: 3,
-    icon: "🏰",
+   
     fortresses: true,
     score: (ctx) => ctx.regions.filter((i) => ctx.state.regions[i].fortress).length,
   },
-  forest: { id: "forest", tokens: 4, icon: "🌲", score: terrainScore("forest") },
-  hill: { id: "hill", tokens: 4, icon: "⛰️", score: terrainScore("hill") },
-  swamp: { id: "swamp", tokens: 4, icon: "🐸", score: terrainScore("swamp") },
+  forest: { id: "forest", tokens: 4, score: terrainScore("forest") },
+  hill: { id: "hill", tokens: 4, score: terrainScore("hill") },
+  swamp: { id: "swamp", tokens: 4, score: terrainScore("swamp") },
   mounted: {
     id: "mounted",
     tokens: 5,
-    icon: "🐎",
+   
     discount: ({ state, region }) => (["hill", "farmland"].includes(state.map.regions[region].terrain) ? 1 : 0),
   },
-  commando: { id: "commando", tokens: 4, icon: "🗡️", discount: () => 1 },
-  seafaring: { id: "seafaring", tokens: 5, icon: "⛵", water: true },
-  flying: { id: "flying", tokens: 5, icon: "🦅", reachAnywhere: true },
+  commando: { id: "commando", tokens: 4, discount: () => 1 },
+  seafaring: { id: "seafaring", tokens: 5, water: true },
+  flying: { id: "flying", tokens: 5, reachAnywhere: true },
   wealthy: {
     id: "wealthy",
     tokens: 4,
-    icon: "💎",
+   
     score: (ctx) => (isCurrent(ctx) && ctx.player.active?.turnsPlayed === 0 ? 7 : 0),
   },
-  pillaging: { id: "pillaging", tokens: 5, icon: "🔥", score: (ctx) => (isCurrent(ctx) ? ctx.state.turn.occupiedConquests : 0) },
+  pillaging: { id: "pillaging", tokens: 5, score: (ctx) => (isCurrent(ctx) ? ctx.state.turn.occupiedConquests : 0) },
   underworld: {
     id: "underworld",
     tokens: 5,
-    icon: "🕳️",
+   
     caveLinks: true,
     discount: ({ state, region }) => (state.map.regions[region].features.includes("cave") ? 1 : 0),
   },
-  stout: { id: "stout", tokens: 4, icon: "🛡️", lateDecline: true },
+  stout: { id: "stout", tokens: 4, lateDecline: true },
   peaceful: {
     id: "peaceful",
     tokens: 3,
-    icon: "🕊️",
+   
     score: (ctx) => (isCurrent(ctx) && ctx.state.turn.attacked.length === 0 ? 3 : 0),
   },
 };

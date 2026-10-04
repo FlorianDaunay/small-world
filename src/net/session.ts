@@ -1,6 +1,6 @@
 import type Peer from "peerjs";
 import type { DataConnection } from "peerjs";
-import { applyAction, applySystem, createGame, type GameAction, type GameSettings, type GameState, type SystemAction } from "@/core/game";
+import { applyAction, applySystem, createGame, normalizeGame, type GameAction, type GameSettings, type GameState, type SystemAction } from "@/core/game";
 import { defaultMap } from "@/core/map/defaults";
 import type { GameMap } from "@/core/map/types";
 import { randomSeed } from "@/core/util/rng";
@@ -101,7 +101,7 @@ export class Session {
       const seat = room.game.players.find((p) => p.id === me) ?? room.game.players[0];
       me = seat.id;
       room.hostId = me;
-      room.game = structuredClone(room.game);
+      room.game = normalizeGame(room.game);
       for (const p of room.game.players) p.connected = p.id === me;
       room.lobby.forEach((p) => (p.connected = p.id === me));
       if (room.game.turn.deadline) room.game.turn.deadline = Date.now() + room.game.settings.turnSeconds * 1000;

@@ -10,7 +10,9 @@ import { mapLabel } from "@/features/create/CreatePage";
 import { Header } from "@/features/layout/Header";
 import { BalancePanel } from "@/features/map/BalancePanel";
 import { HexMap } from "@/features/map/HexMap";
+import { FeatureBadges } from "@/features/map/markers";
 import { FEATURE_ICONS, TERRAIN_COLORS, TERRAIN_ICONS } from "@/features/map/palette";
+import { Icon } from "@/ui/icons/Icon";
 import { useT } from "@/i18n";
 import { allMaps, useMaps } from "@/store/maps";
 import { downloadJson, pickJsonFile } from "@/store/storage";
@@ -276,11 +278,7 @@ export function EditorPage() {
               selected={selected}
               onCellPointer={onCell}
               onRegionClick={readOnly ? setSelected : undefined}
-              renderOverlay={(r, { x, y }) => (
-                <text x={x} y={y + 0.2} fontSize={0.6} textAnchor="middle">
-                  {draft.regions[r].features.map((f) => FEATURE_ICONS[f]).join("")}
-                </text>
-              )}
+              renderOverlay={(r, { x, y }) => <FeatureBadges features={draft.regions[r].features} x={x} y={y} r={0.3} />}
             />
           </div>
         </main>
@@ -304,7 +302,7 @@ export function EditorPage() {
                       )}
                     >
                       <span className="h-3.5 w-3.5 rounded-sm" style={{ background: TERRAIN_COLORS[terrain] }} />
-                      {TERRAIN_ICONS[terrain]} {t.dyn(`terrain.${terrain}`)}
+                      <Icon name={TERRAIN_ICONS[terrain]} className="h-3.5 w-3.5" /> {t.dyn(`terrain.${terrain}`)}
                     </button>
                   ))}
                 </div>
@@ -320,7 +318,7 @@ export function EditorPage() {
                         aria-pressed={region.features.includes(feature)}
                         className={cx("btn btn-sm", region.features.includes(feature) && "btn-primary")}
                       >
-                        {FEATURE_ICONS[feature]} {t.dyn(`feature.${feature}`)}
+                        <Icon name={FEATURE_ICONS[feature]} /> {t.dyn(`feature.${feature}`)}
                       </button>
                     ))}
                   </div>

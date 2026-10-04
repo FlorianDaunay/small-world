@@ -3,7 +3,7 @@ import { topologyOf } from "@/core/map/cache";
 import { buildTopology } from "@/core/map/topology";
 import type { GameMap } from "@/core/map/types";
 import { HexMap } from "./HexMap";
-import { FEATURE_ICONS } from "./palette";
+import { FeatureBadges } from "./markers";
 
 /** Read-only map thumbnail with feature icons. */
 export function MapPreview({ map, className, live }: { map: GameMap; className?: string; live?: boolean }) {
@@ -16,12 +16,7 @@ export function MapPreview({ map, className, live }: { map: GameMap; className?:
       className={className}
       renderOverlay={(region, { x, y }) => {
         const features = map.regions[region].features;
-        if (!features.length) return null;
-        return (
-          <text x={x} y={y + 0.18} fontSize={0.62} textAnchor="middle">
-            {features.map((f) => FEATURE_ICONS[f]).join("")}
-          </text>
-        );
+        return features.length ? <FeatureBadges features={features} x={x} y={y} r={0.3} /> : null;
       }}
     />
   );

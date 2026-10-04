@@ -25,7 +25,6 @@ export type RaceId = (typeof RACE_IDS)[number];
 export interface RaceDef {
   id: RaceId;
   tokens: number;
-  icon: string;
   /** Tokens saved on the cost of conquering a region. */
   discount?: (ctx: ConquestContext) => number;
   /** Bonus coins at the end of the turn. */
@@ -48,20 +47,20 @@ const count = (ctx: ScoreContext, test: (regionIndex: number) => boolean) => ctx
 const terrainOf = (ctx: ScoreContext, i: number) => ctx.state.map.regions[i];
 
 export const RACES: Record<RaceId, RaceDef> = {
-  humans: { id: "humans", tokens: 5, icon: "🧑‍🌾", score: (ctx) => count(ctx, (i) => terrainOf(ctx, i).terrain === "farmland") },
-  elves: { id: "elves", tokens: 6, icon: "🧝", noLosses: true },
+  humans: { id: "humans", tokens: 5, score: (ctx) => count(ctx, (i) => terrainOf(ctx, i).terrain === "farmland") },
+  elves: { id: "elves", tokens: 6, noLosses: true },
   dwarves: {
     id: "dwarves",
     tokens: 3,
-    icon: "⛏️",
+   
     score: (ctx) => count(ctx, (i) => terrainOf(ctx, i).features.includes("mine")),
     scoresInDecline: true,
   },
-  orcs: { id: "orcs", tokens: 5, icon: "👹", score: (ctx) => (ctx.state.players[ctx.state.turn.playerIndex].id === ctx.player.id ? ctx.state.turn.occupiedConquests : 0) },
+  orcs: { id: "orcs", tokens: 5, score: (ctx) => (ctx.state.players[ctx.state.turn.playerIndex].id === ctx.player.id ? ctx.state.turn.occupiedConquests : 0) },
   giants: {
     id: "giants",
     tokens: 6,
-    icon: "🗿",
+   
     discount: ({ state, topology, player, region }) =>
       topology.adjacency[region].some(
         (n) => state.map.regions[n].terrain === "mountain" && state.regions[n].owner === player.id && !state.regions[n].declined
@@ -69,16 +68,16 @@ export const RACES: Record<RaceId, RaceDef> = {
         ? 1
         : 0,
   },
-  wizards: { id: "wizards", tokens: 5, icon: "🧙", score: (ctx) => count(ctx, (i) => terrainOf(ctx, i).features.includes("magic")) },
-  ratmen: { id: "ratmen", tokens: 8, icon: "🐀" },
+  wizards: { id: "wizards", tokens: 5, score: (ctx) => count(ctx, (i) => terrainOf(ctx, i).features.includes("magic")) },
+  ratmen: { id: "ratmen", tokens: 8 },
   tritons: {
     id: "tritons",
     tokens: 6,
-    icon: "🔱",
+   
     discount: ({ topology, region, state }) => (!isWater(state.map.regions[region].terrain) && topology.coastal[region] ? 1 : 0),
   },
-  trolls: { id: "trolls", tokens: 5, icon: "🧌", marks: "lair" },
-  skeletons: { id: "skeletons", tokens: 6, icon: "💀", reinforcements: (occupied) => Math.floor(occupied / 2) },
-  halflings: { id: "halflings", tokens: 6, icon: "🍄", startAnywhere: true, marks: "hole" },
-  amazons: { id: "amazons", tokens: 6, icon: "🏹", conquestOnlyTokens: 4 },
+  trolls: { id: "trolls", tokens: 5, marks: "lair" },
+  skeletons: { id: "skeletons", tokens: 6, reinforcements: (occupied) => Math.floor(occupied / 2) },
+  halflings: { id: "halflings", tokens: 6, startAnywhere: true, marks: "hole" },
+  amazons: { id: "amazons", tokens: 6, conquestOnlyTokens: 4 },
 };

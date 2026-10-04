@@ -1,6 +1,7 @@
 import { topologyOf } from "../map/cache";
 import type { GameMap } from "../map/types";
 import { createRng } from "../util/rng";
+import { emptyStats } from "./migrate";
 import { MAX_FORTRESSES, POWERS, POWER_IDS } from "./powers";
 import { RACES, RACE_IDS } from "./races";
 import {
@@ -59,6 +60,7 @@ export function createGame({ id, settings, map, players, seed, now }: NewGameOpt
       active: null,
       declined: null,
       history: [],
+      stats: emptyStats(),
     })),
     market: races.slice(0, MARKET_SIZE).map((race, i) => ({ race, power: powers[i], coins: 0 })),
     racePool: races.slice(MARKET_SIZE),
@@ -158,6 +160,9 @@ const handlers: { [K in GameAction["type"]]: Handler<K> } = {
     player.coins -= index;
     const [combo] = state.market.splice(index, 1);
     player.coins += combo.coins;
+    player.stats.coinsSpent += index;
+    player.stats.coinsCollected += combo.coins;
+    player.stats.races.push({ race: combo.race, power: combo.power, turn: state.turn.number });
     const race = RACES[combo.race];
     const power = POWERS[combo.power];
     player.active = {
@@ -204,6 +209,8 @@ const handlers: { [K in GameAction["type"]]: Handler<K> } = {
     state.rngState = rng.state();
     const success = active.hand + value >= cost;
     state.lastRoll = { player: player.id, value, success };
+    player.stats.rolls++;
+    if (success) player.stats.rollsWon++;
     log(state, success ? "rollWon" : "rollLost", { player: player.name, value }, now);
     if (success) takeRegion(state, region, active.hand, now);
     // A reinforcement roll is always the last conquest of the turn.
@@ -224,6 +231,7 @@ const handlers: { [K in GameAction["type"]]: Handler<K> } = {
     if (!canDecline(state)) return "cannotDecline";
     const player = currentPlayer(state);
     goIntoDecline(state, player);
+    player.stats.declines++;
     log(state, "declined", { player: player.name }, now);
     finishTurn(state, now);
   },
@@ -285,10 +293,16 @@ function takeRegion(state: GameState, region: number, tokens: number, now: numbe
       // The defender loses one token (none for elves) and gets the rest back.
       const loss = RACES[defender.active.race].noLosses ? 0 : 1;
       defender.active.hand += Math.max(0, target.tokens - loss);
+      defender.stats.tokensLost += Math.min(loss, target.tokens);
+    } else {
+      defender.stats.tokensLost += target.tokens;
     }
+    defender.stats.regionsLost++;
+    player.stats.attacks++;
     if (!state.turn.attacked.includes(defender.id)) state.turn.attacked.push(defender.id);
     log(state, "conqueredFrom", { player: player.name, target: defender.name }, now);
   } else if (target.lostTribe) {
+    player.stats.tribes++;
     log(state, "conqueredTribe", { player: player.name }, now);
   } else {
     log(state, "conquered", { player: player.name }, now);
@@ -308,6 +322,7 @@ function takeRegion(state: GameState, region: number, tokens: number, now: numbe
   });
   active.hand -= tokens;
   state.turn.conquests++;
+  player.stats.conquests++;
   if (occupied) state.turn.occupiedConquests++;
 }
 
@@ -368,6 +383,10 @@ function finishTurn(state: GameState, now: number) {
   const score = scoreBreakdown(state, player);
   player.coins += score.total;
   player.history.push(score.total);
+  player.stats.earnedRegions += score.regions;
+  player.stats.earnedBonus += score.race + score.power;
+  player.stats.coinsTimeline.push(player.coins);
+  player.stats.peakRegions = Math.max(player.stats.peakRegions, score.regions);
   log(state, "scored", { player: player.name, total: score.total, regions: score.regions, bonus: score.race + score.power }, now);
   if (player.active) player.active.turnsPlayed++;
 

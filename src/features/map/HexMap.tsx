@@ -20,7 +20,8 @@ export interface HexMapProps {
   showEmptyCells?: boolean;
   /** Pan with drag and zoom with the wheel (disabled in the editor, where drag paints). */
   panZoom?: boolean;
-  onRegionClick?: (region: number) => void;
+  /** `pointerType` is "touch", "pen" or "mouse": touch screens may want a confirmation tap. */
+  onRegionClick?: (region: number, pointerType: string) => void;
   onRegionContextMenu?: (region: number) => void;
   onRegionHover?: (region: number | null) => void;
   /** Cell-level pointer events, for the editor's brushes. `dragging` is true while the button is held. */
@@ -67,6 +68,7 @@ export const HexMap = memo(function HexMap({
   const svgRef = useRef<SVGSVGElement>(null);
   const drag = useRef<{ x: number; y: number; view: ViewBox; moved: boolean } | null>(null);
   const painting = useRef(false);
+  const lastPointerType = useRef("mouse");
 
   const zoom = useCallback(
     (factor: number, origin?: { x: number; y: number }) => {
@@ -108,11 +110,41 @@ export const HexMap = memo(function HexMap({
     return () => window.removeEventListener("pointerup", stop);
   }, []);
 
+  // Active touch points, for pinch-to-zoom.
+  const pointers = useRef(new Map<number, { x: number; y: number }>());
+  const pinch = useRef<{ distance: number } | null>(null);
+
   const onPointerDown = (e: React.PointerEvent) => {
+    lastPointerType.current = e.pointerType;
     if (!panZoom || e.button !== 0) return;
+    pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pointers.current.size === 2) {
+      const [a, b] = [...pointers.current.values()];
+      pinch.current = { distance: Math.hypot(a.x - b.x, a.y - b.y) };
+      // A pinch is never a tap: mark the gesture as a drag so no region gets clicked.
+      if (drag.current) drag.current.moved = true;
+      return;
+    }
     drag.current = { x: e.clientX, y: e.clientY, view, moved: false };
   };
+  const onPointerUp = (e: React.PointerEvent) => {
+    pointers.current.delete(e.pointerId);
+    if (pinch.current && pointers.current.size < 2) {
+      pinch.current = null;
+      // The remaining finger keeps panning from the zoomed view, without triggering a tap.
+      const rest = [...pointers.current.values()][0];
+      drag.current = rest ? { x: rest.x, y: rest.y, view, moved: true } : { x: 0, y: 0, view, moved: true };
+    }
+  };
   const onPointerMove = (e: React.PointerEvent) => {
+    if (pointers.current.has(e.pointerId)) pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pinch.current && pointers.current.size === 2) {
+      const [a, b] = [...pointers.current.values()];
+      const distance = Math.hypot(a.x - b.x, a.y - b.y);
+      if (distance > 0) zoom(pinch.current.distance / distance, toMap((a.x + b.x) / 2, (a.y + b.y) / 2));
+      pinch.current.distance = distance;
+      return;
+    }
     const d = drag.current;
     if (!d || !svgRef.current) return;
     const dx = e.clientX - d.x;
@@ -148,7 +180,12 @@ export const HexMap = memo(function HexMap({
         className={cx("h-full w-full touch-none", panZoom && "cursor-grab active:cursor-grabbing")}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
-        onPointerLeave={() => onRegionHover?.(null)}
+        onPointerUp={onPointerUp}
+        onPointerCancel={onPointerUp}
+        onPointerLeave={(e) => {
+          onPointerUp(e);
+          onRegionHover?.(null);
+        }}
         onContextMenu={(e) => e.preventDefault()}
       >
         <g>
@@ -176,7 +213,7 @@ export const HexMap = memo(function HexMap({
                 }}
                 onClick={() => {
                   if (wasDrag() || c.region < 0) return;
-                  onRegionClick?.(c.region);
+                  onRegionClick?.(c.region, lastPointerType.current);
                 }}
                 onContextMenu={(e) => {
                   e.preventDefault();
@@ -207,11 +244,11 @@ export const HexMap = memo(function HexMap({
         )}
       </svg>
       {panZoom && (
-        <div className="absolute bottom-3 right-3 flex flex-col gap-1">
-          <button type="button" className="btn btn-icon h-8 w-8 shadow-overlay" onClick={() => zoom(1 / 1.25)} aria-label="zoom in">
+        <div className="absolute bottom-2 right-2 flex flex-col gap-1 sm:bottom-3 sm:right-3">
+          <button type="button" className="btn btn-icon hidden h-8 w-8 shadow-overlay sm:inline-flex" onClick={() => zoom(1 / 1.25)} aria-label="zoom in">
             +
           </button>
-          <button type="button" className="btn btn-icon h-8 w-8 shadow-overlay" onClick={() => zoom(1.25)} aria-label="zoom out">
+          <button type="button" className="btn btn-icon hidden h-8 w-8 shadow-overlay sm:inline-flex" onClick={() => zoom(1.25)} aria-label="zoom out">
             −
           </button>
           <button type="button" className="btn btn-icon h-8 w-8 shadow-overlay" onClick={() => setView(full)} aria-label="reset">

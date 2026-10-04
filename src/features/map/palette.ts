@@ -1,5 +1,6 @@
 import type { Feature, Terrain } from "@/core/map/types";
 import { mix } from "@/themes/color";
+import type { IconName } from "@/ui/icons/Icon";
 
 /**
  * Map colors are deliberately independent of the UI theme: a map must read like a map
@@ -15,24 +16,33 @@ export const TERRAIN_COLORS: Record<Terrain, string> = {
   lake: "#78B4E3",
 };
 
-export const TERRAIN_ICONS: Record<Terrain, string> = {
-  farmland: "🌾",
-  hill: "⛰️",
-  forest: "🌲",
-  swamp: "🪷",
-  mountain: "🏔️",
-  sea: "🌊",
-  lake: "💧",
+export const TERRAIN_ICONS: Record<Terrain, IconName> = {
+  farmland: "farmland",
+  hill: "hill",
+  forest: "forest",
+  swamp: "swamp",
+  mountain: "mountain",
+  sea: "sea",
+  lake: "lake",
 };
 
-export const FEATURE_ICONS: Record<Feature, string> = {
-  mine: "⚒️",
-  cave: "🕳️",
-  magic: "✨",
-  lostTribe: "🛖",
+export const FEATURE_ICONS: Record<Feature, IconName> = {
+  mine: "mine",
+  cave: "cave",
+  magic: "magic",
+  lostTribe: "lostTribe",
 };
 
-export const PLAYER_COLORS = ["#E5484D", "#3E63DD", "#F5A524", "#8E4EC6", "#12A594"] as const;
+/** Background of the round badge drawn behind each feature icon on the map. */
+export const FEATURE_COLORS: Record<Feature, string> = {
+  mine: "#5C4A3D",
+  cave: "#3B3240",
+  magic: "#6A3FB5",
+  lostTribe: "#8A5A2B",
+};
+
+/** Validated categorical palette (colour-blind separation and 3:1 contrast on light and dark). */
+export const PLAYER_COLORS = ["#E5484D", "#3E63DD", "#D97706", "#8E4EC6", "#0E9384"] as const;
 
 export const playerColor = (index: number): string => PLAYER_COLORS[index % PLAYER_COLORS.length];
 

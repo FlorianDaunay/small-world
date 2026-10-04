@@ -2,6 +2,7 @@ import type { BalanceIssue, BalanceReport } from "@/core/map/analysis";
 import { LAND_TERRAINS, WATER_TERRAINS } from "@/core/map/types";
 import { useT, type Translator } from "@/i18n";
 import { cx } from "@/ui/cx";
+import { Icon } from "@/ui/icons/Icon";
 import { FEATURE_ICONS, TERRAIN_COLORS } from "./palette";
 
 const tone = (score: number) => (score >= 80 ? "text-success" : score >= 50 ? "text-warning" : "text-danger");
@@ -88,8 +89,8 @@ export function BalancePanel({ report }: { report: BalanceReport }) {
           ))}
           {(Object.keys(FEATURE_ICONS) as (keyof typeof FEATURE_ICONS)[]).map((feature) => (
             <li key={feature} className="flex items-center justify-between gap-2">
-              <span className="text-text-secondary">
-                {FEATURE_ICONS[feature]} {t.dyn(`feature.${feature}`)}
+              <span className="flex items-center gap-1.5 text-text-secondary">
+                <Icon name={FEATURE_ICONS[feature]} /> {t.dyn(`feature.${feature}`)}
               </span>
               <span className="tabular-nums text-text-muted">{stats.features[feature]}</span>
             </li>

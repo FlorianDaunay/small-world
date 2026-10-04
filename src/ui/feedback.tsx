@@ -36,7 +36,7 @@ export const toast = (text: string, tone?: Toast["tone"]) => useToasts.getState(
 export function Toaster() {
   const toasts = useToasts((s) => s.toasts);
   return createPortal(
-    <div className="pointer-events-none fixed bottom-4 left-1/2 z-[60] flex w-full max-w-sm -translate-x-1/2 flex-col gap-2 px-4">
+    <div className="pointer-events-none fixed left-1/2 top-16 z-[60] sm:bottom-4 sm:top-auto flex w-full max-w-sm -translate-x-1/2 flex-col gap-2 px-4">
       {toasts.map((t) => (
         <div
           key={t.id}
