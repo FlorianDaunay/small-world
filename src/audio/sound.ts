@@ -134,6 +134,13 @@ function noise(ctx: AudioContext, out: AudioNode, { start = 0, duration, gain = 
   src.start(t0);
 }
 
+/** A die bouncing to a stop: knocks that get closer together and softer (matches the animation). */
+function rattle(ctx: AudioContext, out: AudioNode) {
+  [0.45, 0.55, 0.97, 1.05, 1.18, 1.24, 1.28].forEach((start, i) =>
+    noise(ctx, out, { start, duration: 0.035, gain: 0.32 * (1 - i * 0.1), filter: 2200 + i * 150, type: "bandpass" })
+  );
+}
+
 const NOTE = { C5: 523.25, D5: 587.33, E5: 659.25, G5: 783.99, A5: 880, C6: 1046.5, E6: 1318.5, G6: 1568 };
 
 const SOUNDS: Record<SoundName, (ctx: AudioContext, out: AudioNode) => void> = {
@@ -150,12 +157,12 @@ const SOUNDS: Record<SoundName, (ctx: AudioContext, out: AudioNode) => void> = {
     tone(c, o, { freq: 130, to: 50, duration: 0.3, gain: 0.45 });
   },
   rollWon: (c, o) => {
-    for (let i = 0; i < 5; i++) noise(c, o, { start: i * 0.05, duration: 0.03, gain: 0.25, filter: 2500, type: "bandpass" });
-    [NOTE.E5, NOTE.A5].forEach((freq, i) => tone(c, o, { freq, type: "triangle", start: 0.3 + i * 0.1, duration: 0.3, gain: 0.22 }));
+    rattle(c, o);
+    [NOTE.E5, NOTE.A5, NOTE.E6].forEach((freq, i) => tone(c, o, { freq, type: "triangle", start: 1.3 + i * 0.1, duration: 0.35, gain: 0.22 }));
   },
   rollLost: (c, o) => {
-    for (let i = 0; i < 5; i++) noise(c, o, { start: i * 0.05, duration: 0.03, gain: 0.25, filter: 2500, type: "bandpass" });
-    tone(c, o, { freq: 300, to: 150, type: "sawtooth", start: 0.3, duration: 0.4, gain: 0.08 });
+    rattle(c, o);
+    tone(c, o, { freq: 300, to: 150, type: "sawtooth", start: 1.3, duration: 0.45, gain: 0.08 });
   },
   decline: (c, o) => tone(c, o, { freq: 440, to: 180, type: "triangle", duration: 0.7, gain: 0.25, attack: 0.03 }),
   coin: (c, o) => {

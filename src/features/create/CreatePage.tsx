@@ -61,6 +61,7 @@ function NewGameForm() {
   const [maxPlayers, setMaxPlayers] = useState(4);
   const [turns, setTurns] = useState(defaultTurns(4));
   const [turnSeconds, setTurnSeconds] = useState(120);
+  const [reinforcementDie, setReinforcementDie] = useState(true);
   const [mapId, setMapId] = useState(DEFAULT_MAP);
   const [submitted, setSubmitted] = useState(false);
 
@@ -77,7 +78,7 @@ function NewGameForm() {
     e.preventDefault();
     setSubmitted(true);
     if (!name.trim() || !password || !report.playable) return;
-    const settings: GameSettings = { maxPlayers, turns, turnSeconds, mapId };
+    const settings: GameSettings = { maxPlayers, turns, turnSeconds, mapId, reinforcementDie };
     if (await host({ password, settings, customMap: mapId === DEFAULT_MAP ? null : map })) navigate("/room");
   };
 
@@ -99,6 +100,19 @@ function NewGameForm() {
             {(id) => <Select id={id} value={turnSeconds} onChange={setTurnSeconds} options={TURN_TIMES.map((s) => ({ value: s, label: formatSeconds(t, s) }))} />}
           </Field>
         </div>
+        <Field label={t("create.reinforcementDie")} hint={t("create.reinforcementDieHint")}>
+          {(id) => (
+            <Segmented
+              id={id}
+              value={reinforcementDie ? "on" : "off"}
+              onChange={(v) => setReinforcementDie(v === "on")}
+              options={[
+                { value: "on", label: t("create.enabled") },
+                { value: "off", label: t("create.disabled") },
+              ]}
+            />
+          )}
+        </Field>
       </div>
 
       <div className="card flex flex-col gap-4 p-5">

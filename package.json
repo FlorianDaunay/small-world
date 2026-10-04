@@ -1,7 +1,7 @@
 {
   "name": "small-world",
   "private": true,
-  "version": "0.1.1",
+  "version": "0.1.2",
   "type": "module",
   "description": "Jeu de conquête en ligne inspiré de Small World — 100 % front-end, multijoueur pair-à-pair (WebRTC).",
   "scripts": {

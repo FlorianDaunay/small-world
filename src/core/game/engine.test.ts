@@ -7,10 +7,10 @@ import type { GameAction, GameState } from "./types";
 
 const NOW = 1_000_000;
 
-function newGame(players = 2, turns = 3): GameState {
+function newGame(players = 2, turns = 3, die = true): GameState {
   return createGame({
     id: "test",
-    settings: { maxPlayers: players, turns, turnSeconds: 0, mapId: "default" },
+    settings: { maxPlayers: players, turns, turnSeconds: 0, mapId: "default", reinforcementDie: die },
     map: defaultMap(players),
     players: Array.from({ length: players }, (_, i) => ({ id: `p${i}`, name: `P${i}` })),
     seed: 42,
@@ -142,5 +142,20 @@ describe("game engine", () => {
     delete (old.players[0] as Partial<typeof old.players[0]>).stats;
     const upgraded = normalizeGame(old);
     expect(upgraded.players[0].stats.coinsTimeline).toEqual([8, 12]);
+  });
+
+  it("refuses the reinforcement die when the option is off", () => {
+    let state = newGame(2, 3, false);
+    state = act(state, { type: "pick", index: 0 });
+    const topology = topologyOf(state.map);
+    const target = state.regions.findIndex((_, i) => !conquestBlock(state, topology, i));
+    const result = applyAction(state, currentPlayer(state).id, { type: "roll", region: target }, NOW);
+    expect(result).toEqual({ ok: false, error: "dieDisabled" });
+  });
+
+  it("enables the die for games saved before the option existed", () => {
+    const old = structuredClone(newGame());
+    delete (old.settings as Partial<typeof old.settings>).reinforcementDie;
+    expect(normalizeGame(old).settings.reinforcementDie).toBe(true);
   });
 });

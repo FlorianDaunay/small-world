@@ -106,6 +106,8 @@ export function LobbyView() {
               <dd className="text-right font-medium">{room.settings.turns}</dd>
               <dt className="text-text-muted">{t("create.turnTime")}</dt>
               <dd className="text-right font-medium">{formatSeconds(t, room.settings.turnSeconds)}</dd>
+              <dt className="text-text-muted">{t("create.reinforcementDie")}</dt>
+              <dd className="text-right font-medium">{room.settings.reinforcementDie === false ? t("create.disabled") : t("create.enabled")}</dd>
               <dt className="text-text-muted">{t("create.map")}</dt>
               <dd className="truncate text-right font-medium">{room.customMap ? mapLabel(t, room.customMap) : t("create.defaultMap")}</dd>
             </dl>

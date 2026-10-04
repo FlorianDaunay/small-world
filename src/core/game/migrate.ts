@@ -25,6 +25,7 @@ export const emptyStats = (): PlayerStats => ({
  */
 export function normalizeGame(game: GameState): GameState {
   const copy = structuredClone(game);
+  copy.settings.reinforcementDie ??= true;
   for (const player of copy.players) {
     if (!player.stats) {
       const stats = emptyStats();

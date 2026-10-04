@@ -44,7 +44,7 @@ export function ActionPanel({ selected, onSelect }: { selected: number | null; o
 
   const selectedCost = selected != null && targets.has(selected) ? conquestCost(game, topology, selected) : null;
   const canConquer = phase === "conquer" && selectedCost != null && !!active && active.hand >= selectedCost;
-  const canRoll = phase === "conquer" && selectedCost != null && !!active && active.hand > 0 && active.hand < selectedCost;
+  const canRoll = game.settings.reinforcementDie && phase === "conquer" && selectedCost != null && !!active && active.hand > 0 && active.hand < selectedCost;
   const canAbandon = phase === "conquer" && game.turn.conquests === 0 && selected != null && myRegions.has(selected);
   const ownSelected = phase === "redeploy" && selected != null && myRegions.has(selected);
   const canFortress = ownSelected && !!active && POWERS[active.power].fortresses && !game.turn.fortressPlaced && !game.regions[selected!].fortress;

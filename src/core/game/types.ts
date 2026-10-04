@@ -9,6 +9,8 @@ export interface GameSettings {
   turns: number;
   /** Time limit per player turn, in seconds (0 = unlimited). */
   turnSeconds: number;
+  /** Allows a last, random conquest with the reinforcement die when tokens run short. */
+  reinforcementDie: boolean;
   /** `"default"` for the built-in map matching the player count, or a custom map id. */
   mapId: string;
 }

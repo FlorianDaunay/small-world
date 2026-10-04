@@ -187,6 +187,7 @@ function Awards({ players }: { players: PlayerState[] }) {
 
 function DetailsTable({ players }: { players: PlayerState[] }) {
   const t = useT();
+  const { game } = useGame();
   return (
     <div className="scrollbar-thin overflow-x-auto">
       <table className="w-full text-sm">
@@ -204,7 +205,7 @@ function DetailsTable({ players }: { players: PlayerState[] }) {
           </tr>
         </thead>
         <tbody>
-          {METRICS.map((m) => {
+          {METRICS.filter((m) => game.settings.reinforcementDie || m.key !== "results.metric.rolls").map((m) => {
             const values = players.map(m.value);
             const target = m.best === "max" ? Math.max(...values) : m.best === "min" ? Math.min(...values) : null;
             const unique = target !== null && values.filter((v) => v === target).length < players.length;

@@ -196,6 +196,7 @@ const handlers: { [K in GameAction["type"]]: Handler<K> } = {
   },
 
   roll(state, { region }, now) {
+    if (!state.settings.reinforcementDie) return "dieDisabled";
     const topology = topologyOf(state.map);
     if (!state.regions[region]) return "invalid";
     const block = conquestBlock(state, topology, region);

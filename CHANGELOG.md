@@ -5,6 +5,17 @@ Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le pr
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-10-04
+
+### Ajouté
+
+- Option de partie **Dé de renfort** (activé par défaut) : désactivé, aucune conquête au dé n'est possible et la statistique « Dés réussis » disparaît des résultats.
+- **Animation du dé** : quand un joueur lance le dé de renfort, un dé 3D rebondit au centre du plateau chez tous les joueurs, puis affiche le résultat (réussite ou échec). Le son est synchronisé avec les rebonds ; l'animation est réduite si le système demande moins de mouvements.
+
+### Modifié
+
+- Protocole réseau v3 (nouvelle option de partie) : tous les joueurs doivent être en 0.1.2. Les sauvegardes précédentes restent compatibles (dé activé).
+
 ## [0.1.1] - 2026-10-04
 
 ### Ajouté
@@ -37,6 +48,7 @@ Première version jouable.
 - Une soixantaine de thèmes d'interface, français et anglais.
 - Déploiement automatique sur GitHub Pages.
 
-[Unreleased]: https://github.com/FlorianDaunay/small-world/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/FlorianDaunay/small-world/compare/v0.1.2...HEAD
+[0.1.2]: https://github.com/FlorianDaunay/small-world/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/FlorianDaunay/small-world/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/FlorianDaunay/small-world/releases/tag/v0.1.0

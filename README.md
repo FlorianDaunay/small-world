@@ -11,7 +11,7 @@ Jeu de conquête multijoueur **inspiré du jeu de société _Small World_**, jou
 - **Reprise automatique si l'hôte se déconnecte** : chaque joueur garde une copie complète de la partie ; le joueur suivant dans l'ordre d'arrivée devient hôte et les autres se reconnectent à lui (détection en ~8 s grâce à un battement de cœur).
 - **Reconnexion** : un joueur qui recharge la page ou revient retrouve sa place (même appareil ou même nom).
 - **Sauvegarde automatique** de la partie dans le `localStorage` à chaque action, **export / import JSON**, et reprise depuis l'écran « Créer une partie ».
-- **Réglages de partie** : nombre de joueurs, nombre de tours, temps par tour (le tour se joue automatiquement à expiration), carte par défaut ou personnalisée.
+- **Réglages de partie** : nombre de joueurs, nombre de tours, temps par tour (le tour se joue automatiquement à expiration), dé de renfort activé ou non, carte par défaut ou personnalisée.
 - **Éditeur de cartes** hexagonales : peinture de régions, terrains, mines / cavernes / sources magiques / tribus oubliées, génération aléatoire, annulation (Ctrl+Z), import / export JSON.
 - **Évaluation de l'équilibrage** en direct : score sur 100, taille adaptée au nombre de joueurs, répartition des terrains et éléments, connectivité, points de départ…
 - **12 races et 15 pouvoirs** (humains, elfes, nains, trolls, halfelins… / alchimistes, volants, marins, fortifiés…), déclin, dé de renfort, tribus oubliées.

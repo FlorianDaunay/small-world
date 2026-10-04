@@ -102,6 +102,7 @@ export class Session {
       me = seat.id;
       room.hostId = me;
       room.game = normalizeGame(room.game);
+      room.settings = room.game.settings;
       for (const p of room.game.players) p.connected = p.id === me;
       room.lobby.forEach((p) => (p.connected = p.id === me));
       if (room.game.turn.deadline) room.game.turn.deadline = Date.now() + room.game.settings.turnSeconds * 1000;

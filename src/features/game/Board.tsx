@@ -6,6 +6,7 @@ import { FeatureBadges, MapBadge } from "@/features/map/markers";
 import { FEATURE_ICONS, TERRAIN_ICONS, playerColor } from "@/features/map/palette";
 import { useT } from "@/i18n";
 import { Icon, SvgIcon } from "@/ui/icons/Icon";
+import { DiceRoll } from "./DiceRoll";
 import { MapLegend } from "./MapLegend";
 import { useGame } from "./useGame";
 
@@ -77,6 +78,7 @@ export function Board({ selected, onSelect }: BoardProps) {
     >
       {info != null && <RegionTooltip region={info} />}
       <MapLegend />
+      <DiceRoll />
     </HexMap>
   );
 }
