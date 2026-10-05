@@ -1,6 +1,7 @@
 import { defaultMap } from "../map/defaults";
 import { topologyOf } from "../map/cache";
 import { applyAction, applySystem, createGame } from "./engine";
+import { newLogEntries } from "./log";
 import { normalizeGame } from "./migrate";
 import { conquestBlock, conquestCost, currentPlayer, regionsOf } from "./rules";
 import type { GameAction, GameState } from "./types";
@@ -10,7 +11,7 @@ const NOW = 1_000_000;
 function newGame(players = 2, turns = 3, die = true): GameState {
   return createGame({
     id: "test",
-    settings: { maxPlayers: players, turns, turnSeconds: 0, mapId: "default", reinforcementDie: die },
+    settings: { maxPlayers: players, turns, turnSeconds: 0, mapId: "default", reinforcementDie: die, extensions: [] },
     map: defaultMap(players),
     players: Array.from({ length: players }, (_, i) => ({ id: `p${i}`, name: `P${i}` })),
     seed: 42,
@@ -157,5 +158,17 @@ describe("game engine", () => {
     const old = structuredClone(newGame());
     delete (old.settings as Partial<typeof old.settings>).reinforcementDie;
     expect(normalizeGame(old).settings.reinforcementDie).toBe(true);
+  });
+});
+
+describe("log diff", () => {
+  const entry = (key: string, at: number) => ({ key, at });
+
+  it("returns the entries added since the previous log, even once the log is capped", () => {
+    const before = [entry("a", 1), entry("b", 2)];
+    expect(newLogEntries(before, [...before, entry("c", 3)])).toEqual([entry("c", 3)]);
+    expect(newLogEntries(before, [entry("b", 2), entry("c", 3), entry("d", 4)])).toEqual([entry("c", 3), entry("d", 4)]);
+    expect(newLogEntries(before, before)).toEqual([]);
+    expect(newLogEntries([], [entry("a", 1)])).toEqual([entry("a", 1)]);
   });
 });

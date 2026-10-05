@@ -5,6 +5,25 @@ Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le pr
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-10-05
+
+### Ajouté
+
+- **Extensions** optionnelles, choisies à la création de la partie et cumulables (sauf si elles se contredisent : un seul choix de saison) :
+  - *Peuples maudits* : gobelins, kobolds, pouvoirs Grouillants et Maraudeurs ;
+  - *Contrées sauvages* : dryades, farfadets, pouvoirs Impériaux et Retranchés ;
+  - *Contes et légendes* : un événement tiré à chaque tour de jeu (moisson, brouillard, trêve, peste…) ;
+  - *Hiver éternel* : lacs gelés conquérables, montagnes +1 en défense ;
+  - *Grande sécheresse* : lacs asséchés conquérables, +1 pièce par région bordant la mer.
+- **Ambiance** propre à chaque extension (halo coloré, emblème, particules : neige, braises, feuilles…) sur la création, le salon et le plateau ; les saisons repeignent aussi la carte.
+- **Retours visuels** : éclair et onde à chaque conquête, épées et pertes lors d'une attaque, tribu qui s'en va, fort qui s'élève, bandeaux (tour, choix de race, déclin, gains, événement), compteur de pièces animé avec « +N », coût de conquête affiché sur les régions attaquables.
+- Section *Extensions* dans les règles.
+
+### Modifié
+
+- **Nouveau style de carte** : textures légères par terrain (sillons, arbres, vagues…), relief doux aux frontières, rivages, ombre portée, grille hexagonale discrète et jetons en relief.
+- Protocole réseau v4 : tous les joueurs doivent être en 0.2.0. Les sauvegardes précédentes restent compatibles (sans extension).
+
 ## [0.1.2] - 2026-10-04
 
 ### Ajouté

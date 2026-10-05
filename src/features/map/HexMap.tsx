@@ -1,10 +1,11 @@
-import { memo, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { memo, useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNode } from "react";
 import { cellCenter, gridSize, hexPoints } from "@/core/map/hex";
 import type { MapTopology } from "@/core/map/topology";
 import type { GameMap } from "@/core/map/types";
 import { cx } from "@/ui/cx";
-import { buildGeometry } from "./geometry";
-import { cellColor } from "./palette";
+import { geometryOf } from "./geometry";
+import { regionColor, terrainLook, type MapAtmosphere, type Texture } from "./palette";
+import { TextureDefs, textureId } from "./textures";
 
 export interface HexMapProps {
   map: GameMap;
@@ -17,6 +18,10 @@ export interface HexMapProps {
   renderOverlay?: (region: number, anchor: { x: number; y: number }) => ReactNode;
   /** Dims regions (e.g. not reachable) without hiding them. */
   dimmed?: ReadonlySet<number>;
+  /** Seasonal look of the terrains (extensions). */
+  atmosphere?: MapAtmosphere;
+  /** Extra SVG drawn above everything, in map units (animations). */
+  layers?: ReactNode;
   showEmptyCells?: boolean;
   /** Pan with drag and zoom with the wheel (disabled in the editor, where drag paints). */
   panZoom?: boolean;
@@ -48,6 +53,8 @@ export const HexMap = memo(function HexMap({
   hovered,
   renderOverlay,
   dimmed,
+  atmosphere = "default",
+  layers,
   showEmptyCells,
   panZoom,
   onRegionClick,
@@ -57,7 +64,8 @@ export const HexMap = memo(function HexMap({
   className,
   children,
 }: HexMapProps) {
-  const geometry = useMemo(() => buildGeometry(map, topology), [map, topology]);
+  const geometry = useMemo(() => geometryOf(map, topology), [map, topology]);
+  const texturePrefix = `tx${useId().replace(/[^a-zA-Z0-9]/g, "")}`;
   const full = useMemo<ViewBox>(() => {
     const { width, height } = gridSize(map.cols, map.rows);
     return { x: -PADDING, y: -PADDING, w: width + PADDING * 2, h: height + PADDING * 2 };
@@ -161,16 +169,37 @@ export const HexMap = memo(function HexMap({
     return moved;
   };
 
+  /** Each region's colour, and the regions sharing each texture merged into a single path. */
+  const paint = useMemo(() => {
+    const fills = map.regions.map((r, i) => regionColor(r.terrain, i, atmosphere));
+    const textures = new Map<Texture, string>();
+    map.regions.forEach((r, i) => {
+      const { texture } = terrainLook(r.terrain, atmosphere);
+      textures.set(texture, (textures.get(texture) ?? "") + (geometry.fills[i] ?? ""));
+    });
+    return { fills, textures: [...textures] };
+  }, [map.regions, geometry, atmosphere]);
+
+  /** Per-cell shapes: empty cells (editor) and the hit areas of cell-level tools. */
+  const cellLevel = !!onCellPointer;
   const cells = useMemo(
     () =>
-      map.cells.map((region, cell) => {
-        if (region < 0 && !showEmptyCells) return null;
-        const { x, y } = cellCenter(cell, map.cols);
-        const terrain = region >= 0 ? map.regions[region]?.terrain : undefined;
-        return { cell, region, points: hexPoints(x, y, 1.002), fill: terrain ? cellColor(terrain, cell) : undefined };
-      }),
-    [map, showEmptyCells]
+      showEmptyCells || cellLevel
+        ? map.cells.map((region, cell) => {
+            if (region < 0 && !showEmptyCells) return null;
+            const { x, y } = cellCenter(cell, map.cols);
+            return { cell, region, points: hexPoints(x, y, 1.002) };
+          })
+        : [],
+    [map, showEmptyCells, cellLevel]
   );
+
+  const regionClick = (region: number) => {
+    if (wasDrag() || region < 0) return;
+    onRegionClick?.(region, lastPointerType.current);
+  };
+  const interactive = !!(onRegionClick || onCellPointer);
+  const silhouette = useMemo(() => geometry.fills.join(""), [geometry]);
 
   return (
     <div className={cx("relative h-full w-full select-none overflow-hidden", className)}>
@@ -188,42 +217,74 @@ export const HexMap = memo(function HexMap({
         }}
         onContextMenu={(e) => e.preventDefault()}
       >
+        <TextureDefs prefix={texturePrefix} textures={paint.textures.map(([texture]) => texture)} />
+        {/* Soft drop shadow: the map floats a little above the background. */}
+        <path d={silhouette} fill="#000000" fillOpacity={0.16} transform="translate(0.12 0.2)" pointerEvents="none" />
+        {showEmptyCells && (
+          <g pointerEvents="none">
+            {cells.map((c) => c && c.region < 0 && <polygon key={c.cell} points={c.points} className="fill-surface-hover/40 stroke-border" strokeWidth={0.03} />)}
+          </g>
+        )}
         <g>
-          {cells.map((c) =>
-            c ? (
-              <polygon
-                key={c.cell}
-                points={c.points}
-                fill={c.fill ?? "transparent"}
-                className={cx(
-                  c.region < 0 && "fill-surface-hover/40 stroke-border",
-                  c.region >= 0 && dimmed?.has(c.region) && "opacity-55",
-                  (onRegionClick || onCellPointer) && "cursor-pointer"
-                )}
-                strokeWidth={c.region < 0 ? 0.03 : 0}
-                onPointerDown={(e) => {
-                  if (!onCellPointer || e.button !== 0) return;
-                  painting.current = true;
-                  (e.target as Element).releasePointerCapture?.(e.pointerId);
-                  onCellPointer(c.cell, false);
-                }}
-                onPointerEnter={() => {
-                  if (onCellPointer && painting.current) onCellPointer(c.cell, true);
-                  onRegionHover?.(c.region >= 0 ? c.region : null);
-                }}
-                onClick={() => {
-                  if (wasDrag() || c.region < 0) return;
-                  onRegionClick?.(c.region, lastPointerType.current);
-                }}
+          {geometry.fills.map((d, region) =>
+            d ? (
+              <path
+                key={region}
+                d={d}
+                fill={paint.fills[region]}
+                className={cx(interactive && !onCellPointer && "cursor-pointer")}
+                onPointerEnter={() => onRegionHover?.(region)}
+                onClick={() => regionClick(region)}
                 onContextMenu={(e) => {
                   e.preventDefault();
-                  if (c.region >= 0) onRegionContextMenu?.(c.region);
+                  onRegionContextMenu?.(region);
                 }}
               />
             ) : null
           )}
         </g>
-        <path d={geometry.borders} fill="none" stroke="#1d1a16" strokeOpacity={0.8} strokeWidth={0.11} strokeLinecap="round" pointerEvents="none" />
+        <g pointerEvents="none">
+          {paint.textures.map(([texture, d]) => (
+            <path key={texture} d={d} fill={`url(#${textureId(texturePrefix, texture)})`} />
+          ))}
+          <path d={geometry.grid} fill="none" stroke="#FFFFFF" strokeOpacity={0.13} strokeWidth={0.025} />
+          {/* A wide, faint stroke along every border reads as a gentle bevel on both sides. */}
+          <path d={geometry.borders + geometry.outline} fill="none" stroke="#000000" strokeOpacity={0.07} strokeWidth={0.34} strokeLinecap="round" />
+          <path d={geometry.coast} fill="none" stroke="#FFF6D8" strokeOpacity={0.6} strokeWidth={0.14} strokeLinecap="round" />
+          <path d={geometry.borders} fill="none" stroke="#2A241D" strokeOpacity={0.5} strokeWidth={0.065} strokeLinecap="round" />
+          <path d={geometry.outline} fill="none" stroke="#2A241D" strokeOpacity={0.7} strokeWidth={0.1} strokeLinecap="round" />
+          {dimmed &&
+            [...dimmed].map((r) => (geometry.fills[r] ? <path key={r} d={geometry.fills[r]} fill="#000000" fillOpacity={0.3} /> : null))}
+        </g>
+        {onCellPointer && (
+          <g>
+            {cells.map((c) =>
+              c ? (
+                <polygon
+                  key={c.cell}
+                  points={c.points}
+                  fill="transparent"
+                  className="cursor-pointer"
+                  onPointerDown={(e) => {
+                    if (e.button !== 0) return;
+                    painting.current = true;
+                    (e.target as Element).releasePointerCapture?.(e.pointerId);
+                    onCellPointer(c.cell, false);
+                  }}
+                  onPointerEnter={() => {
+                    if (painting.current) onCellPointer(c.cell, true);
+                    onRegionHover?.(c.region >= 0 ? c.region : null);
+                  }}
+                  onClick={() => regionClick(c.region)}
+                  onContextMenu={(e) => {
+                    e.preventDefault();
+                    if (c.region >= 0) onRegionContextMenu?.(c.region);
+                  }}
+                />
+              ) : null
+            )}
+          </g>
+        )}
         {highlight && (
           <g pointerEvents="none">
             {[...highlight].map((r) => (
@@ -242,6 +303,7 @@ export const HexMap = memo(function HexMap({
             {topology.anchor.map((anchor, region) => (topology.cellsOf[region].length ? <g key={region}>{renderOverlay(region, anchor)}</g> : null))}
           </g>
         )}
+        {layers && <g pointerEvents="none">{layers}</g>}
       </svg>
       {panZoom && (
         <div className="absolute bottom-2 right-2 flex flex-col gap-1 sm:bottom-3 sm:right-3">

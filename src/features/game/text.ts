@@ -10,6 +10,7 @@ export const comboName = (t: Translator, race: RaceId, power: PowerId) => t("com
 /** Log lines store ids; names are resolved in the reader's language. */
 export function describeLog(t: Translator, entry: LogEntry): string {
   const params = { ...entry.params };
+  if (typeof params.event === "string") params.event = t.dyn(`event.${params.event}.name`);
   if (typeof params.race === "string" && typeof params.power === "string") {
     const combo = comboName(t, params.race as RaceId, params.power as PowerId);
     return t.dyn(`log.${entry.key}`, { ...params, race: combo, power: "" }).replace(/\s+\./, ".").replace(/\s{2,}/g, " ");

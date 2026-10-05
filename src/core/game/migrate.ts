@@ -1,3 +1,4 @@
+import { sanitizeExtensions } from "./extensions";
 import { STARTING_COINS } from "./rules";
 import type { GameState, PlayerStats } from "./types";
 
@@ -26,6 +27,8 @@ export const emptyStats = (): PlayerStats => ({
 export function normalizeGame(game: GameState): GameState {
   const copy = structuredClone(game);
   copy.settings.reinforcementDie ??= true;
+  copy.settings.extensions = sanitizeExtensions(copy.settings.extensions);
+  copy.event ??= null;
   for (const player of copy.players) {
     if (!player.stats) {
       const stats = emptyStats();

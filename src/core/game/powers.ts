@@ -16,6 +16,12 @@ export const POWER_IDS = [
   "underworld",
   "stout",
   "peaceful",
+  // extension "cursed"
+  "hordes",
+  "marauding",
+  // extension "wilds"
+  "imperial",
+  "entrenched",
 ] as const;
 export type PowerId = (typeof POWER_IDS)[number];
 
@@ -41,6 +47,8 @@ export interface PowerDef {
   lateDecline?: boolean;
   /** May build one fortress per turn. */
   fortresses?: boolean;
+  /** Tokens gained before redeployment, from the turn's results. */
+  reinforcements?: (occupiedConquests: number) => number;
 }
 
 const terrainScore = (terrain: string) => (ctx: ScoreContext) =>
@@ -53,7 +61,6 @@ export const POWERS: Record<PowerId, PowerDef> = {
   fortified: {
     id: "fortified",
     tokens: 3,
-   
     fortresses: true,
     score: (ctx) => ctx.regions.filter((i) => ctx.state.regions[i].fortress).length,
   },
@@ -63,7 +70,6 @@ export const POWERS: Record<PowerId, PowerDef> = {
   mounted: {
     id: "mounted",
     tokens: 5,
-   
     discount: ({ state, region }) => (["hill", "farmland"].includes(state.map.regions[region].terrain) ? 1 : 0),
   },
   commando: { id: "commando", tokens: 4, discount: () => 1 },
@@ -72,14 +78,12 @@ export const POWERS: Record<PowerId, PowerDef> = {
   wealthy: {
     id: "wealthy",
     tokens: 4,
-   
     score: (ctx) => (isCurrent(ctx) && ctx.player.active?.turnsPlayed === 0 ? 7 : 0),
   },
   pillaging: { id: "pillaging", tokens: 5, score: (ctx) => (isCurrent(ctx) ? ctx.state.turn.occupiedConquests : 0) },
   underworld: {
     id: "underworld",
     tokens: 5,
-   
     caveLinks: true,
     discount: ({ state, region }) => (state.map.regions[region].features.includes("cave") ? 1 : 0),
   },
@@ -87,7 +91,10 @@ export const POWERS: Record<PowerId, PowerDef> = {
   peaceful: {
     id: "peaceful",
     tokens: 3,
-   
     score: (ctx) => (isCurrent(ctx) && ctx.state.turn.attacked.length === 0 ? 3 : 0),
   },
+  hordes: { id: "hordes", tokens: 4, reinforcements: () => 1 },
+  marauding: { id: "marauding", tokens: 4, discount: ({ state, region }) => (state.regions[region].tokens === 0 ? 1 : 0) },
+  imperial: { id: "imperial", tokens: 4, score: (ctx) => Math.max(0, ctx.regions.length - 3) },
+  entrenched: { id: "entrenched", tokens: 3, score: (ctx) => (ctx.regions.length > 0 && ctx.regions.length <= 4 ? 4 : 0) },
 };

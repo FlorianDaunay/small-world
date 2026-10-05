@@ -23,6 +23,10 @@ const ICONS = {
   skeletons: "skeleton",
   halflings: "hobbit-dwelling",
   amazons: "bow-arrow",
+  goblins: "goblin-head",
+  kobolds: "imp",
+  dryads: "deku-tree",
+  leprechauns: "clover",
   // powers
   alchemist: "cauldron",
   merchant: "two-coins",
@@ -39,6 +43,25 @@ const ICONS = {
   underworld: "cave-entrance",
   stout: "strong",
   peaceful: "peace-dove",
+  hordes: "barbarian",
+  marauding: "robber",
+  imperial: "imperial-crown",
+  entrenched: "barricade",
+  // extensions
+  extCursed: "cursed-star",
+  extWilds: "fairy",
+  extLegends: "open-book",
+  extWinter: "snowflake-1",
+  extDrought: "sun",
+  // events
+  harvest: "grain-bundle",
+  goldRush: "gold-nuggets",
+  arcane: "crystal-ball",
+  fog: "fog",
+  truce: "trumpet-flag",
+  migration: "caravan",
+  plague: "plague-doctor-profile",
+  landslide: "falling-rocks",
   // map
   farmland: "wheat",
   mountain: "mountains",
@@ -82,6 +105,9 @@ const ICONS = {
   chat: "talk",
   log: "quill-ink",
   market: "card-pick",
+  puzzle: "puzzle",
+  check: "check-mark",
+  sparkles: "sparkles",
 };
 
 const missing = Object.entries(ICONS).filter(([, name]) => !set.icons[name]);

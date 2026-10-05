@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Ambiance } from "@/features/extensions/Ambiance";
 import { Header } from "@/features/layout/Header";
 import { playerColor } from "@/features/map/palette";
 import { ChatPanel } from "@/features/room/ChatPanel";
@@ -111,7 +112,8 @@ export function GameView() {
       </Header>
 
       <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
-        <main className="relative min-h-0 flex-1">
+        <main className="relative min-h-0 flex-1 bg-canvas">
+          <Ambiance extensions={game.settings.extensions} />
           <Board selected={selected} onSelect={setSelected} />
         </main>
         <aside className="surface flex max-h-[58dvh] shrink-0 flex-col border-x-0 border-b-0 lg:max-h-none lg:w-96 lg:border-y-0 lg:border-l lg:border-r-0">

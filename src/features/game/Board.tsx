@@ -1,12 +1,16 @@
 import { useCallback, useMemo, useState } from "react";
 import { conquestBlock, conquestCost, regionDefence, type GameState } from "@/core/game";
 import { RACE_ART } from "@/features/cards/art";
+import { mapAtmosphere } from "@/features/extensions/art";
 import { HexMap } from "@/features/map/HexMap";
 import { FeatureBadges, MapBadge } from "@/features/map/markers";
 import { FEATURE_ICONS, TERRAIN_ICONS, playerColor } from "@/features/map/palette";
 import { useT } from "@/i18n";
 import { Icon, SvgIcon } from "@/ui/icons/Icon";
 import { DiceRoll } from "./DiceRoll";
+import { EventBadge } from "./EventBadge";
+import { Announcer } from "./effects/Announcer";
+import { BoardEffects } from "./effects/BoardEffects";
 import { MapLegend } from "./MapLegend";
 import { useGame } from "./useGame";
 
@@ -55,10 +59,25 @@ export function Board({ selected, onSelect }: BoardProps) {
 
   const colorOf = useMemo(() => new Map(game.players.map((p) => [p.id, playerColor(p.color)])), [game.players]);
 
+  const hand = self?.active?.hand ?? 0;
   const renderOverlay = useCallback(
-    (region: number, { x, y }: { x: number; y: number }) => <RegionMarkers game={game} region={region} x={x} y={y} color={colorOf.get(game.regions[region].owner ?? "")} />,
-    [game, colorOf]
+    (region: number, { x, y }: { x: number; y: number }) => {
+      const cost = targets.get(region);
+      return (
+        <RegionMarkers
+          game={game}
+          region={region}
+          x={x}
+          y={y}
+          color={colorOf.get(game.regions[region].owner ?? "")}
+          cost={cost}
+          affordable={cost !== undefined && hand >= cost}
+        />
+      );
+    },
+    [game, colorOf, targets, hand]
   );
+  const layers = useMemo(() => <BoardEffects />, []);
 
   const info = hovered ?? selected;
 
@@ -74,16 +93,30 @@ export function Board({ selected, onSelect }: BoardProps) {
       onRegionClick={onClick}
       onRegionContextMenu={onContext}
       renderOverlay={renderOverlay}
-      className="bg-canvas"
+      atmosphere={mapAtmosphere(game.settings.extensions)}
+      layers={layers}
     >
       {info != null && <RegionTooltip region={info} />}
       <MapLegend />
+      <EventBadge />
+      <Announcer />
       <DiceRoll />
     </HexMap>
   );
 }
 
-function RegionMarkers({ game, region, x, y, color }: { game: GameState; region: number; x: number; y: number; color?: string }) {
+interface RegionMarkersProps {
+  game: GameState;
+  region: number;
+  x: number;
+  y: number;
+  color?: string;
+  /** Conquest cost when the local player can attack the region right now. */
+  cost?: number;
+  affordable?: boolean;
+}
+
+function RegionMarkers({ game, region, x, y, color, cost, affordable }: RegionMarkersProps) {
   const state = game.regions[region];
   const def = game.map.regions[region];
   const features = def.features.filter((f) => f !== "lostTribe");
@@ -103,6 +136,8 @@ function RegionMarkers({ game, region, x, y, color }: { game: GameState; region:
       {state.lostTribe && <MapBadge icon={FEATURE_ICONS.lostTribe} color="#8A5A2B" x={x} y={y} r={0.38} />}
       {state.tokens > 0 && color && (
         <g>
+          {/* Token: a soft shadow, the player's disc with a light sheen, and the count. */}
+          <circle cx={x + 0.03} cy={y + 0.07} r={0.5} fill="#000000" fillOpacity={0.28} />
           <circle
             cx={x}
             cy={y}
@@ -112,7 +147,8 @@ function RegionMarkers({ game, region, x, y, color }: { game: GameState; region:
             strokeWidth={state.declined ? 0.13 : 0.07}
             strokeDasharray={state.declined ? "0.17 0.1" : undefined}
           />
-          <text x={x} y={y + 0.17} fontSize={0.48} fontWeight={800} textAnchor="middle" fill="#FFFFFF" style={{ fontFamily: "var(--font-sans)" }}>
+          <ellipse cx={x - 0.06} cy={y - 0.2} rx={0.3} ry={0.15} fill="#FFFFFF" fillOpacity={0.2} />
+          <text key={state.tokens} x={x} y={y + 0.17} fontSize={0.48} fontWeight={800} textAnchor="middle" fill="#FFFFFF" className="fx-bump" style={{ fontFamily: "var(--font-sans)" }}>
             {state.tokens}
           </text>
           {race && (
@@ -126,6 +162,21 @@ function RegionMarkers({ game, region, x, y, color }: { game: GameState; region:
       {markers.map((m, i) => (
         <MapBadge key={m.icon} icon={m.icon} color={m.color} x={x + 0.52} y={y + 0.36 - i * 0.44} r={0.21} />
       ))}
+      {cost !== undefined && <CostTag x={x} y={y + (state.tokens > 0 || state.lostTribe ? 0.62 : 0.05)} cost={cost} affordable={!!affordable} />}
+    </g>
+  );
+}
+
+/** Small "swords + cost" tag on the regions the local player can attack. */
+function CostTag({ x, y, cost, affordable }: { x: number; y: number; cost: number; affordable: boolean }) {
+  const width = 0.78;
+  return (
+    <g opacity={affordable ? 1 : 0.7}>
+      <rect x={x - width / 2} y={y - 0.2} width={width} height={0.4} rx={0.2} fill={affordable ? "#1F2937" : "#6B6B6B"} fillOpacity={0.85} stroke="#FFFFFF" strokeOpacity={0.8} strokeWidth={0.03} />
+      <SvgIcon name="swords" x={x - 0.18} y={y} size={0.26} color={affordable ? "#FFD27A" : "#E5E5E5"} />
+      <text x={x + 0.15} y={y + 0.11} fontSize={0.3} fontWeight={800} textAnchor="middle" fill="#FFFFFF" style={{ fontFamily: "var(--font-sans)" }}>
+        {cost}
+      </text>
     </g>
   );
 }

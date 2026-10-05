@@ -13,6 +13,12 @@ export interface ConquestContext {
 export interface ScoreContext {
   state: GameState;
   player: PlayerState;
-  /** Regions held by the race being scored. */
+  /** Regions held by the race being scored (all the player's regions for world rules). */
   regions: number[];
+}
+
+/** What a hook sees when the rules compute a region's defence. */
+export interface DefenceContext {
+  state: GameState;
+  region: number;
 }

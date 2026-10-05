@@ -1,6 +1,6 @@
 import type Peer from "peerjs";
 import type { DataConnection } from "peerjs";
-import { applyAction, applySystem, createGame, normalizeGame, type GameAction, type GameSettings, type GameState, type SystemAction } from "@/core/game";
+import { applyAction, applySystem, createGame, normalizeGame, sanitizeExtensions, type GameAction, type GameSettings, type GameState, type SystemAction } from "@/core/game";
 import { defaultMap } from "@/core/map/defaults";
 import type { GameMap } from "@/core/map/types";
 import { randomSeed } from "@/core/util/rng";
@@ -87,7 +87,7 @@ export class Session {
       epoch: 0,
       hostId: options.playerId,
       passwordHash: options.passwordHash,
-      settings: options.settings,
+      settings: { ...options.settings, extensions: sanitizeExtensions(options.settings.extensions) },
       customMap: options.customMap,
       lobby: options.game
         ? players.map((p) => ({ id: p.id, name: p.name, connected: false }))

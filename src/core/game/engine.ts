@@ -1,9 +1,11 @@
 import { topologyOf } from "../map/cache";
 import type { GameMap } from "../map/types";
-import { createRng } from "../util/rng";
+import { createRng, type Rng } from "../util/rng";
+import { EVENT_IDS } from "./events";
+import { EXTENSIONS, availablePowers, availableRaces, sanitizeExtensions } from "./extensions";
 import { emptyStats } from "./migrate";
-import { MAX_FORTRESSES, POWERS, POWER_IDS } from "./powers";
-import { RACES, RACE_IDS } from "./races";
+import { MAX_FORTRESSES, POWERS } from "./powers";
+import { RACES, minTokensOf } from "./races";
 import {
   DIE_FACES,
   MARKET_SIZE,
@@ -15,6 +17,7 @@ import {
   leaders,
   regionsOf,
   scoreBreakdown,
+  worldRules,
 } from "./rules";
 import type { ActionResult, GameAction, GameSettings, GameState, PlayerState, SystemAction, TurnState } from "./types";
 
@@ -29,12 +32,13 @@ export interface NewGameOptions {
   now: number;
 }
 
-/** Sets up a fresh game: shuffled seat order, market and lost tribes. */
-export function createGame({ id, settings, map, players, seed, now }: NewGameOptions): GameState {
+/** Sets up a fresh game: shuffled seat order, market (with the extensions' races and powers) and lost tribes. */
+export function createGame({ id, settings: requested, map, players, seed, now }: NewGameOptions): GameState {
+  const settings: GameSettings = { ...requested, extensions: sanitizeExtensions(requested.extensions) };
   const rng = createRng(seed);
   const seats = rng.shuffle(players);
-  const races = rng.shuffle(RACE_IDS);
-  const powers = rng.shuffle(POWER_IDS);
+  const races = rng.shuffle(availableRaces(settings.extensions));
+  const powers = rng.shuffle(availablePowers(settings.extensions));
   const state: GameState = {
     id,
     version: 1,
@@ -67,13 +71,23 @@ export function createGame({ id, settings, map, players, seed, now }: NewGameOpt
     powerPool: powers.slice(MARKET_SIZE),
     rngState: rng.state(),
     turn: freshTurn(1, 0, "pick", settings, now),
+    event: null,
     lastRoll: null,
     log: [],
     winners: [],
   };
   log(state, "gameStarted", { turns: settings.turns }, now);
+  drawEvent(state, rng, now);
+  state.rngState = rng.state();
   log(state, "turnStarted", { player: state.players[0].name, turn: 1 }, now);
   return state;
+}
+
+/** Start of a game turn with the "legends" extension: a new event, never the same twice in a row. */
+function drawEvent(state: GameState, rng: Rng, now: number) {
+  if (!state.settings.extensions.some((e) => EXTENSIONS[e].events)) return;
+  state.event = rng.pick(EVENT_IDS.filter((e) => e !== state.event));
+  log(state, "event", { event: state.event }, now);
 }
 
 function freshTurn(number: number, playerIndex: number, phase: TurnState["phase"], settings: GameSettings, now: number): TurnState {
@@ -225,7 +239,7 @@ const handlers: { [K in GameAction["type"]]: Handler<K> } = {
     if (!target || target.owner !== player.id || target.declined || !player.active) return "invalid";
     player.active.hand += target.tokens;
     Object.assign(target, { owner: null, tokens: 0, fortress: false, lair: false, hole: false });
-    log(state, "abandoned", { player: player.name }, now);
+    log(state, "abandoned", { player: player.name, region }, now);
   },
 
   decline(state, _action, now) {
@@ -253,7 +267,7 @@ const handlers: { [K in GameAction["type"]]: Handler<K> } = {
       target.tokens++;
       active.hand--;
     } else {
-      if (target.tokens <= 1) return "lastToken";
+      if (target.tokens <= minTokensOf(active.race)) return "lastToken";
       target.tokens--;
       active.hand++;
     }
@@ -270,7 +284,7 @@ const handlers: { [K in GameAction["type"]]: Handler<K> } = {
     if (built >= MAX_FORTRESSES) return "fortressLimit";
     target.fortress = true;
     state.turn.fortressPlaced = true;
-    log(state, "fortress", { player: player.name }, now);
+    log(state, "fortress", { player: player.name, region }, now);
   },
 
   endTurn(state, _action, now) {
@@ -289,24 +303,24 @@ function takeRegion(state: GameState, region: number, tokens: number, now: numbe
   const occupied = target.tokens > 0 || target.lostTribe;
   const defender = target.owner ? state.players.find((p) => p.id === target.owner) : undefined;
 
+  // Log entries carry the region so that the board can animate the conquest.
   if (defender && defender.id !== player.id && target.tokens > 0) {
+    let lost = target.tokens;
     if (!target.declined && defender.active) {
       // The defender loses one token (none for elves) and gets the rest back.
-      const loss = RACES[defender.active.race].noLosses ? 0 : 1;
-      defender.active.hand += Math.max(0, target.tokens - loss);
-      defender.stats.tokensLost += Math.min(loss, target.tokens);
-    } else {
-      defender.stats.tokensLost += target.tokens;
+      lost = Math.min(RACES[defender.active.race].noLosses ? 0 : 1, target.tokens);
+      defender.active.hand += target.tokens - lost;
     }
+    defender.stats.tokensLost += lost;
     defender.stats.regionsLost++;
     player.stats.attacks++;
     if (!state.turn.attacked.includes(defender.id)) state.turn.attacked.push(defender.id);
-    log(state, "conqueredFrom", { player: player.name, target: defender.name }, now);
+    log(state, "conqueredFrom", { player: player.name, target: defender.name, region, lost }, now);
   } else if (target.lostTribe) {
     player.stats.tribes++;
-    log(state, "conqueredTribe", { player: player.name }, now);
+    log(state, "conqueredTribe", { player: player.name, region }, now);
   } else {
-    log(state, "conquered", { player: player.name }, now);
+    log(state, "conquered", { player: player.name, region }, now);
   }
 
   const mark = RACES[active.race].marks;
@@ -338,12 +352,16 @@ function beginRedeploy(state: GameState, now: number) {
     active.hand -= fromHand;
     toRemove -= fromHand;
     for (const r of regionsOf(state, player.id, false)) {
-      while (toRemove > 0 && state.regions[r].tokens > 1) {
+      while (toRemove > 0 && state.regions[r].tokens > minTokensOf(active.race)) {
         state.regions[r].tokens--;
         toRemove--;
       }
     }
-    const extra = race.reinforcements?.(state.turn.occupiedConquests) ?? 0;
+    const occupied = state.turn.occupiedConquests;
+    const extra =
+      (race.reinforcements?.(occupied) ?? 0) +
+      (POWERS[active.power].reinforcements?.(occupied) ?? 0) +
+      worldRules(state).reduce((sum, w) => sum + (w.reinforcements?.({ state, player }) ?? 0), 0);
     if (extra > 0) {
       active.hand += extra;
       log(state, "reinforced", { player: player.name, count: extra }, now);
@@ -385,10 +403,10 @@ function finishTurn(state: GameState, now: number) {
   player.coins += score.total;
   player.history.push(score.total);
   player.stats.earnedRegions += score.regions;
-  player.stats.earnedBonus += score.race + score.power;
+  player.stats.earnedBonus += score.total - score.regions;
   player.stats.coinsTimeline.push(player.coins);
   player.stats.peakRegions = Math.max(player.stats.peakRegions, score.regions);
-  log(state, "scored", { player: player.name, total: score.total, regions: score.regions, bonus: score.race + score.power }, now);
+  log(state, "scored", { player: player.name, total: score.total, regions: score.regions, bonus: score.total - score.regions }, now);
   if (player.active) player.active.turnsPlayed++;
 
   // Defenders put the tokens they got back on their remaining regions.
@@ -408,19 +426,26 @@ function finishTurn(state: GameState, now: number) {
     log(state, "gameOver", { winners: names.join(", ") }, now);
     return;
   }
+  if (number !== state.turn.number) {
+    const rng = createRng(state.rngState);
+    drawEvent(state, rng, now);
+    state.rngState = rng.state();
+  }
   const next = state.players[playerIndex];
   state.turn = freshTurn(number, playerIndex, next.active ? "conquer" : "pick", state.settings, now);
   if (next.active) gatherTroops(state, next);
   log(state, "turnStarted", { player: next.name, turn: number }, now);
 }
 
-/** Start of turn: every active region keeps one token, the rest goes back to hand. */
+/** Start of turn: every active region keeps one token (two for kobolds), the rest goes back to hand. */
 function gatherTroops(state: GameState, player: PlayerState) {
   const active = player.active!;
+  const keep = minTokensOf(active.race);
   for (const r of regionsOf(state, player.id, false)) {
     const region = state.regions[r];
-    active.hand += region.tokens - 1;
-    region.tokens = 1;
+    const back = Math.max(0, region.tokens - keep);
+    active.hand += back;
+    region.tokens -= back;
   }
   active.hand += RACES[active.race].conquestOnlyTokens ?? 0;
 }

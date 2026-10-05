@@ -18,6 +18,10 @@ export const RACE_ART: Record<RaceId, { icon: IconName; color: string }> = {
   skeletons: { icon: "skeletons", color: "#5F5B73" },
   halflings: { icon: "halflings", color: "#B86A1E" },
   amazons: { icon: "amazons", color: "#B02D55" },
+  goblins: { icon: "goblins", color: "#4F7A1F" },
+  kobolds: { icon: "kobolds", color: "#9A4A2A" },
+  dryads: { icon: "dryads", color: "#2F7D4A" },
+  leprechauns: { icon: "leprechauns", color: "#3E8E3A" },
 };
 
 export const POWER_ART: Record<PowerId, { icon: IconName; color: string }> = {
@@ -36,4 +40,8 @@ export const POWER_ART: Record<PowerId, { icon: IconName; color: string }> = {
   underworld: { icon: "underworld", color: "#4E3A33" },
   stout: { icon: "stout", color: "#4A5D68" },
   peaceful: { icon: "peaceful", color: "#0E7C70" },
+  hordes: { icon: "hordes", color: "#7A3B2E" },
+  marauding: { icon: "marauding", color: "#5B4A6E" },
+  imperial: { icon: "imperial", color: "#9C7A12" },
+  entrenched: { icon: "entrenched", color: "#6A5A44" },
 };

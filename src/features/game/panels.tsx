@@ -5,6 +5,7 @@ import { ComboCard, ComboChip, PowerEmblem, RaceEmblem, TokenPill } from "@/feat
 import { playerColor } from "@/features/map/palette";
 import { useT } from "@/i18n";
 import { useSession } from "@/store/session";
+import { AnimatedNumber } from "@/ui/AnimatedNumber";
 import { Button } from "@/ui/Button";
 import { confirmDialog } from "@/ui/feedback";
 import { cx } from "@/ui/cx";
@@ -60,7 +61,10 @@ export function ActionPanel({ selected, onSelect }: { selected: number | null; o
         <p className="min-w-0 flex-1 text-sm font-medium">{t.dyn(`game.phase.${phase}${touch && phase !== "pick" ? "Touch" : ""}`)}</p>
         {active && phase !== "pick" && (
           <span className="badge text-sm font-semibold text-text-primary" title={t("game.hand", { count: active.hand })}>
-            <Icon name="hand" className="h-4 w-4" /> {active.hand}
+            <Icon name="hand" className="h-4 w-4" />
+            <span key={active.hand} className="fx-bump inline-block tabular-nums">
+              {active.hand}
+            </span>
           </span>
         )}
         {game.lastRoll && (
@@ -158,7 +162,7 @@ function PlayerCard({ player }: { player: PlayerState }) {
           {!player.connected && <span className="badge text-warning">{t("common.away")}</span>}
           <span className="flex items-center gap-1 font-mono text-base font-bold tabular-nums" title={t("game.coins", { count: player.coins })}>
             <Icon name="coins" className="h-4 w-4 text-warning" />
-            {player.coins}
+            <AnimatedNumber value={player.coins} gainClassName="text-warning" />
           </span>
         </div>
         <div className="mt-2 space-y-1.5 text-xs">
@@ -189,7 +193,9 @@ function PlayerCard({ player }: { player: PlayerState }) {
           )}
           {isCurrent && (
             <p className="text-text-secondary">
-              {t("game.info.breakdown", { regions: projected.regions, race: projected.race, power: projected.power })}
+              {projected.world
+                ? t("game.info.breakdownWorld", { regions: projected.regions, race: projected.race, power: projected.power, world: projected.world })
+                : t("game.info.breakdown", { regions: projected.regions, race: projected.race, power: projected.power })}
             </p>
           )}
           {player.stats.races.length > 0 && (

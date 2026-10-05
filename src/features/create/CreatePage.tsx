@@ -1,9 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { defaultTurns, type GameSettings } from "@/core/game";
+import { defaultTurns, type ExtensionId, type GameSettings } from "@/core/game";
 import { analyzeMap } from "@/core/map/analysis";
 import { defaultMap } from "@/core/map/defaults";
 import { Page } from "@/features/layout/Header";
+import { Ambiance } from "@/features/extensions/Ambiance";
+import { ExtensionPicker } from "@/features/extensions/ExtensionPicker";
+import { mapAtmosphere } from "@/features/extensions/art";
 import { NameField } from "@/features/layout/NameField";
 import { BalanceScore, describeIssue } from "@/features/map/BalancePanel";
 import { MapPreview } from "@/features/map/MapPreview";
@@ -17,6 +20,7 @@ import { Button } from "@/ui/Button";
 import { Field, Segmented, Select, TextInput } from "@/ui/Field";
 import { Tabs } from "@/ui/Tabs";
 import { confirmDialog, toast } from "@/ui/feedback";
+import { Icon } from "@/ui/icons/Icon";
 
 const TURN_TIMES = [0, 60, 90, 120, 180, 300];
 const DEFAULT_MAP = "default";
@@ -63,6 +67,7 @@ function NewGameForm() {
   const [turnSeconds, setTurnSeconds] = useState(120);
   const [reinforcementDie, setReinforcementDie] = useState(true);
   const [mapId, setMapId] = useState(DEFAULT_MAP);
+  const [extensions, setExtensions] = useState<ExtensionId[]>([]);
   const [submitted, setSubmitted] = useState(false);
 
   const maps = allMaps(custom);
@@ -78,12 +83,13 @@ function NewGameForm() {
     e.preventDefault();
     setSubmitted(true);
     if (!name.trim() || !password || !report.playable) return;
-    const settings: GameSettings = { maxPlayers, turns, turnSeconds, mapId, reinforcementDie };
+    const settings: GameSettings = { maxPlayers, turns, turnSeconds, mapId, reinforcementDie, extensions };
     if (await host({ password, settings, customMap: mapId === DEFAULT_MAP ? null : map })) navigate("/room");
   };
 
   return (
     <form onSubmit={submit} className="grid gap-6 lg:grid-cols-[1fr_1fr]">
+      <Ambiance extensions={extensions} fixed />
       <div className="card space-y-5 p-5">
         <NameField showError={submitted} />
         <Field label={t("create.password")} hint={t("create.passwordHint")} error={submitted && !password ? t("create.passwordRequired") : undefined}>
@@ -127,7 +133,7 @@ function NewGameForm() {
           )}
         </Field>
         <div className="aspect-[4/3] overflow-hidden rounded-tile border border-border bg-canvas">
-          <MapPreview map={map} />
+          <MapPreview map={map} atmosphere={mapAtmosphere(extensions)} />
         </div>
         <div className="flex items-start justify-between gap-3">
           <BalanceScore report={report} compact />
@@ -139,8 +145,22 @@ function NewGameForm() {
                 : report.issues[0] && describeIssue(t, report.issues[0])}
           </div>
         </div>
-        {error && <p className="text-sm text-danger">{t.dyn(`errors.${error}`)}</p>}
-        <Button type="submit" variant="primary" size="lg" disabled={busy} className="mt-auto">
+      </div>
+
+      <section className="card space-y-4 p-5 lg:col-span-2">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <h2 className="flex items-center gap-2 text-lg font-semibold">
+            <Icon name="puzzle" className="h-5 w-5 text-accent" /> {t("create.extensions")}
+          </h2>
+          <span className="badge">{extensions.length ? t("create.extensionsCount", { count: extensions.length }) : t("create.extensionsBase")}</span>
+        </div>
+        <p className="text-sm text-text-muted">{t("create.extensionsHint")}</p>
+        <ExtensionPicker value={extensions} onChange={setExtensions} />
+      </section>
+
+      <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-end lg:col-span-2">
+        {error && <p className="text-sm text-danger sm:mr-auto">{t.dyn(`errors.${error}`)}</p>}
+        <Button type="submit" variant="primary" size="lg" disabled={busy}>
           {busy ? t("common.loading") : t("create.open")}
         </Button>
       </div>
@@ -187,7 +207,7 @@ function ResumeList() {
         return (
           <div key={save.id} className="card flex flex-col gap-4 p-4 sm:flex-row sm:items-center">
             <div className="h-24 w-full shrink-0 overflow-hidden rounded-tile border border-border bg-canvas sm:w-36">
-              <MapPreview map={game.map} />
+              <MapPreview map={game.map} atmosphere={mapAtmosphere(game.settings.extensions ?? [])} />
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2">

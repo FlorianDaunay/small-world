@@ -1,18 +1,8 @@
 import { useEffect, useRef } from "react";
-import type { LogEntry } from "@/core/game";
+import { newLogEntries, type LogEntry } from "@/core/game";
 import { SYSTEM_SENDER } from "@/net/session";
 import { useSession } from "@/store/session";
 import { playSound, type SoundName } from "./sound";
-
-const sameEntry = (a: LogEntry, b: LogEntry) => a.at === b.at && a.key === b.key && JSON.stringify(a.params) === JSON.stringify(b.params);
-
-/** Log entries appended since `previous` (the log is capped, so match on the last known entry). */
-function newEntries(previous: LogEntry[], next: LogEntry[]): LogEntry[] {
-  if (!previous.length) return [];
-  const last = previous[previous.length - 1];
-  for (let i = next.length - 1; i >= 0; i--) if (sameEntry(next[i], last)) return next.slice(i + 1);
-  return [];
-}
 
 /**
  * Turns room changes into sound effects: game log entries, chat messages and lobby arrivals.
@@ -33,7 +23,8 @@ export function useRoomSounds() {
 
     const sounds: SoundName[] = [];
     const myName = room.game?.players.find((p) => p.id === me)?.name;
-    for (const entry of newEntries(before.log, log)) {
+    // An empty previous log (lobby → game) has nothing to replay.
+    for (const entry of before.log.length ? newLogEntries(before.log, log) : []) {
       const actor = entry.params?.player;
       switch (entry.key) {
         case "picked":

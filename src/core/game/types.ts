@@ -1,4 +1,6 @@
 import type { GameMap } from "../map/types";
+import type { EventId } from "./events";
+import type { ExtensionId } from "./extensions";
 import type { PowerId } from "./powers";
 import type { RaceId } from "./races";
 
@@ -13,6 +15,8 @@ export interface GameSettings {
   reinforcementDie: boolean;
   /** `"default"` for the built-in map matching the player count, or a custom map id. */
   mapId: string;
+  /** Optional extensions in play (never two conflicting ones). */
+  extensions: ExtensionId[];
 }
 
 /** A race/power pair offered in the market, with the coins players left on it. */
@@ -130,6 +134,8 @@ export interface GameState {
   powerPool: PowerId[];
   rngState: number;
   turn: TurnState;
+  /** Event of the current game turn ("legends" extension), or `null`. */
+  event: EventId | null;
   /** Result of the last reinforcement die roll, for display. */
   lastRoll: { player: string; value: number; success: boolean } | null;
   log: LogEntry[];

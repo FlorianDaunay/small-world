@@ -4,3 +4,8 @@ export { createGame, applyAction, applySystem, type NewGameOptions } from "./eng
 export { RACES, RACE_IDS, type RaceId, type RaceDef } from "./races";
 export { POWERS, POWER_IDS, MAX_FORTRESSES, type PowerId, type PowerDef } from "./powers";
 export { normalizeGame, emptyStats } from "./migrate";
+export * from "./extensions";
+export { EVENTS, EVENT_IDS, type EventId } from "./events";
+export type { WorldRules } from "./world";
+export { minTokensOf } from "./races";
+export { newLogEntries } from "./log";

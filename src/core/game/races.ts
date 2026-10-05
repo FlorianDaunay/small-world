@@ -1,5 +1,5 @@
 import { isWater } from "../map/types";
-import type { ConquestContext, ScoreContext } from "./context";
+import type { ConquestContext, DefenceContext, ScoreContext } from "./context";
 
 export const RACE_IDS = [
   "humans",
@@ -14,6 +14,12 @@ export const RACE_IDS = [
   "skeletons",
   "halflings",
   "amazons",
+  // extension "cursed"
+  "goblins",
+  "kobolds",
+  // extension "wilds"
+  "dryads",
+  "leprechauns",
 ] as const;
 export type RaceId = (typeof RACE_IDS)[number];
 
@@ -41,6 +47,10 @@ export interface RaceDef {
   reinforcements?: (occupiedConquests: number) => number;
   /** Marker left on each conquered region. */
   marks?: "lair" | "hole";
+  /** Fewest tokens the race may leave in one of its regions (1 when unset). */
+  minTokens?: number;
+  /** Extra defence of the regions it holds while active. */
+  defence?: (ctx: DefenceContext) => number;
 }
 
 const count = (ctx: ScoreContext, test: (regionIndex: number) => boolean) => ctx.regions.filter(test).length;
@@ -52,7 +62,6 @@ export const RACES: Record<RaceId, RaceDef> = {
   dwarves: {
     id: "dwarves",
     tokens: 3,
-   
     score: (ctx) => count(ctx, (i) => terrainOf(ctx, i).features.includes("mine")),
     scoresInDecline: true,
   },
@@ -60,7 +69,6 @@ export const RACES: Record<RaceId, RaceDef> = {
   giants: {
     id: "giants",
     tokens: 6,
-   
     discount: ({ state, topology, player, region }) =>
       topology.adjacency[region].some(
         (n) => state.map.regions[n].terrain === "mountain" && state.regions[n].owner === player.id && !state.regions[n].declined
@@ -73,11 +81,29 @@ export const RACES: Record<RaceId, RaceDef> = {
   tritons: {
     id: "tritons",
     tokens: 6,
-   
     discount: ({ topology, region, state }) => (!isWater(state.map.regions[region].terrain) && topology.coastal[region] ? 1 : 0),
   },
   trolls: { id: "trolls", tokens: 5, marks: "lair" },
   skeletons: { id: "skeletons", tokens: 6, reinforcements: (occupied) => Math.floor(occupied / 2) },
   halflings: { id: "halflings", tokens: 6, startAnywhere: true, marks: "hole" },
   amazons: { id: "amazons", tokens: 6, conquestOnlyTokens: 4 },
+  goblins: {
+    id: "goblins",
+    tokens: 6,
+    discount: ({ state, region }) => (state.regions[region].declined && state.regions[region].owner ? 1 : 0),
+  },
+  kobolds: { id: "kobolds", tokens: 11, minTokens: 2 },
+  dryads: {
+    id: "dryads",
+    tokens: 5,
+    defence: ({ state, region }) => (state.map.regions[region].terrain === "forest" ? 2 : 0),
+  },
+  leprechauns: {
+    id: "leprechauns",
+    tokens: 6,
+    score: (ctx) => new Set(ctx.regions.map((i) => terrainOf(ctx, i).terrain).filter((t) => !isWater(t))).size,
+  },
 };
+
+/** Fewest tokens a race may leave in a region it holds. */
+export const minTokensOf = (race: RaceId): number => RACES[race].minTokens ?? 1;

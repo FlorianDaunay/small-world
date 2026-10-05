@@ -1,8 +1,11 @@
 import type { MapTopology } from "../map/topology";
 import { isWater } from "../map/types";
+import { EVENTS } from "./events";
+import { EXTENSIONS } from "./extensions";
 import { POWERS } from "./powers";
-import { RACES } from "./races";
+import { RACES, minTokensOf } from "./races";
 import type { GameState, PlayerState } from "./types";
+import type { WorldRules } from "./world";
 
 /** Faces of the reinforcement die rolled for a last conquest. */
 export const DIE_FACES = [0, 0, 0, 1, 2, 3] as const;
@@ -23,30 +26,51 @@ export function regionsOf(state: GameState, playerId: string, declined: boolean)
   return result;
 }
 
+/** Rule sets that apply to everyone right now: the chosen extensions' and the current event's. */
+export function worldRules(state: GameState): WorldRules[] {
+  const rules: WorldRules[] = [];
+  for (const id of state.settings.extensions) {
+    const extra = EXTENSIONS[id]?.rules;
+    if (extra) rules.push(extra);
+  }
+  if (state.event) rules.push(EVENTS[state.event]);
+  return rules;
+}
+
+const sumOf = <C>(rules: WorldRules[], pick: (r: WorldRules) => ((ctx: C) => number) | undefined, ctx: C) =>
+  rules.reduce((sum, r) => sum + (pick(r)?.(ctx) ?? 0), 0);
+
+/** Lakes are land when an extension says so (frozen or dried up). */
+export const landLakes = (state: GameState): boolean => worldRules(state).some((r) => r.landLakes);
+
+/** Whether a region is water nobody can normally enter. */
+export function isWaterRegion(state: GameState, region: number): boolean {
+  const terrain = state.map.regions[region].terrain;
+  return isWater(terrain) && !(terrain === "lake" && landLakes(state));
+}
+
 /** Defence of a region before any attacker discount: what the attacker has to beat. */
 export function regionDefence(state: GameState, region: number): number {
   const r = state.regions[region];
   const def = state.map.regions[region];
-  return (
-    r.tokens +
-    (r.lostTribe ? 1 : 0) +
-    (def.terrain === "mountain" ? 1 : 0) +
-    (r.fortress ? 1 : 0) +
-    (r.lair ? 1 : 0)
-  );
+  const ctx = { state, region };
+  const holder = r.owner && !r.declined ? state.players.find((p) => p.id === r.owner)?.active : null;
+  const own = holder ? (RACES[holder.race].defence?.(ctx) ?? 0) : 0;
+  const base = r.tokens + (r.lostTribe ? 1 : 0) + (def.terrain === "mountain" ? 1 : 0) + (r.fortress ? 1 : 0) + (r.lair ? 1 : 0);
+  return Math.max(0, base + own + sumOf(worldRules(state), (w) => w.defence, ctx));
 }
 
 /** Tokens the current player needs to conquer `region` (never below 1). */
 export function conquestCost(state: GameState, topology: MapTopology, region: number): number {
   const player = currentPlayer(state);
   const active = player.active;
-  let cost = 2 + regionDefence(state, region);
+  const ctx = { state, topology, player, region };
+  let cost = 2 + regionDefence(state, region) - sumOf(worldRules(state), (w) => w.discount, ctx);
   if (active) {
-    const ctx = { state, topology, player, region };
     cost -= RACES[active.race].discount?.(ctx) ?? 0;
     cost -= POWERS[active.power].discount?.(ctx) ?? 0;
   }
-  return Math.max(1, cost);
+  return Math.max(active ? minTokensOf(active.race) : 1, cost);
 }
 
 export type ConquestBlock =
@@ -71,12 +95,12 @@ export function conquestBlock(state: GameState, topology: MapTopology, region: n
   if (target.owner === player.id && !target.declined) return "alreadyYours";
   const race = RACES[active.race];
   const power = POWERS[active.power];
-  if (isWater(def.terrain) && !power.water) return "water";
+  if (isWaterRegion(state, region) && !power.water) return "water";
   if (target.hole && target.owner && target.owner !== player.id) {
     const owner = state.players.find((p) => p.id === target.owner);
     if (owner?.active?.race === "halflings" && !target.declined) return "immune";
   }
-  if (active.hand <= 0) return "noTokens";
+  if (active.hand < minTokensOf(active.race)) return "noTokens";
 
   const own = regionsOf(state, player.id, false);
   if (power.reachAnywhere) return null;
@@ -98,8 +122,18 @@ export function canDecline(state: GameState): boolean {
   return turn.phase === "redeploy" && POWERS[player.active.power].lateDecline === true;
 }
 
+export interface ScoreBreakdown {
+  /** One coin per region held, active or in decline. */
+  regions: number;
+  race: number;
+  power: number;
+  /** Extensions and events (may be negative). */
+  world: number;
+  total: number;
+}
+
 /** Coins the player would earn if the turn ended now, split by source. */
-export function scoreBreakdown(state: GameState, player: PlayerState): { regions: number; race: number; power: number; total: number } {
+export function scoreBreakdown(state: GameState, player: PlayerState): ScoreBreakdown {
   const active = regionsOf(state, player.id, false);
   const declined = regionsOf(state, player.id, true);
   let race = 0;
@@ -113,7 +147,8 @@ export function scoreBreakdown(state: GameState, player: PlayerState): { regions
     race += RACES[player.declined.race].score?.({ state, player, regions: declined }) ?? 0;
   }
   const regions = active.length + declined.length;
-  return { regions, race, power, total: regions + race + power };
+  const world = sumOf(worldRules(state), (w) => w.score, { state, player, regions: [...active, ...declined] });
+  return { regions, race, power, world, total: Math.max(0, regions + race + power + world) };
 }
 
 /** Players with the most coins (several on a tie). */

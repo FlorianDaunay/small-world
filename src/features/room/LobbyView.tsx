@@ -3,6 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { analyzeMap } from "@/core/map/analysis";
 import { defaultMap } from "@/core/map/defaults";
 import { formatSeconds, mapLabel } from "@/features/create/CreatePage";
+import { Ambiance } from "@/features/extensions/Ambiance";
+import { ExtensionBadges } from "@/features/extensions/ExtensionPicker";
+import { mapAtmosphere } from "@/features/extensions/art";
 import { Page } from "@/features/layout/Header";
 import { MapPreview } from "@/features/map/MapPreview";
 import { BalanceScore } from "@/features/map/BalancePanel";
@@ -26,6 +29,7 @@ export function LobbyView() {
   const players = room.lobby.filter((p) => p.connected);
   const map = room.customMap ?? defaultMap(Math.max(2, players.length));
   const report = analyzeMap(map, Math.max(2, players.length));
+  const extensions = room.settings.extensions ?? [];
 
   const copy = async (what: "code" | "link") => {
     await navigator.clipboard?.writeText(what === "code" ? room.code : inviteLink(room.code));
@@ -42,6 +46,7 @@ export function LobbyView() {
 
   return (
     <Page wide header={<span className="truncate text-sm text-text-secondary">{t("lobby.title")}</span>}>
+      <Ambiance extensions={extensions} fixed />
       <div className="grid gap-6 lg:grid-cols-[1.2fr_1fr]">
         <div className="space-y-6">
           <section className="card p-5">
@@ -110,9 +115,13 @@ export function LobbyView() {
               <dd className="text-right font-medium">{room.settings.reinforcementDie === false ? t("create.disabled") : t("create.enabled")}</dd>
               <dt className="text-text-muted">{t("create.map")}</dt>
               <dd className="truncate text-right font-medium">{room.customMap ? mapLabel(t, room.customMap) : t("create.defaultMap")}</dd>
+              <dt className="text-text-muted">{t("create.extensions")}</dt>
+              <dd className="text-right font-medium">
+                <ExtensionBadges extensions={extensions} />
+              </dd>
             </dl>
             <div className="aspect-[4/3] overflow-hidden rounded-tile border border-border bg-canvas">
-              <MapPreview map={map} />
+              <MapPreview map={map} atmosphere={mapAtmosphere(extensions)} />
             </div>
             <div className="mt-3">
               <BalanceScore report={report} compact />
